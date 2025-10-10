@@ -1,5 +1,5 @@
 FROM node:21-alpine
-
+RUN apk add --no-cache ca-certificates
 WORKDIR /app
 
 ADD package.json ./

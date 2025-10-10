@@ -1,4 +1,16 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import axios from 'axios'
+
+onMounted(async () => {
+  try {
+    const res = await axios.get('/api/users')
+    console.log(res.data)
+  } catch (err) {
+    console.error('Failed to fetch /users:', err)
+  }
+})
+</script>
 
 <template>
   <h1>You did it!</h1>
