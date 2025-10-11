@@ -38,7 +38,10 @@ async function seedFromFile(filePath) {
         }))
 
       if (promptDocs.length) {
-        await Prompt.insertMany(promptDocs, { ordered: true })
+        const createdPrompts = await Prompt.insertMany(promptDocs, { ordered: true })
+        // Update Agent's prompts array with the created prompt IDs
+        agent.prompts = createdPrompts.map((p) => p._id)
+        await agent.save()
       }
     }
   }

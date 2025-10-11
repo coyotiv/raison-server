@@ -4,16 +4,18 @@ const autopopulate = require('mongoose-autopopulate')
 const agentSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    prompts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Prompt', autopopulate: true }],
   },
   { timestamps: true }
 )
 
-// Virtual relation: an Agent has many Prompts
-agentSchema.virtual('prompts', {
+agentSchema.virtual('systemPrompt', {
   ref: 'Prompt',
   localField: '_id',
   foreignField: 'agent',
-  justOne: false,
+  justOne: true,
+  limit: 1,
+  sort: { createdAt: -1 },
   options: { autopopulate: true },
 })
 

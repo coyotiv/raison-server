@@ -3,12 +3,8 @@ const autopopulate = require('mongoose-autopopulate')
 
 const promptSchema = new mongoose.Schema(
   {
+    agent: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
     systemPrompt: { type: String, required: true },
-    agent: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Agent',
-      required: true,
-    },
     version: {
       type: String,
       default: function () {
