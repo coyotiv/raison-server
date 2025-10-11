@@ -23,34 +23,22 @@ async function seedFromFile(filePath) {
     if (!a || !a.name) continue
 
     const name = a.name.trim()
+    if (!name) continue
 
-    const agent = await Agent.findOneAndUpdate(
-      { name },
-      { name },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    )
+    const agent = await Agent.create({ name })
 
     const prompts = Array.isArray(a.prompts) ? a.prompts : []
     if (prompts.length) {
-      for (const p of prompts) {
-        if (!p || !p.systemPrompt) continue
-        const filter = {
+      const promptDocs = prompts
+        .filter((p) => p && p.systemPrompt)
+        .map((p) => ({
           agent: agent._id,
           systemPrompt: p.systemPrompt,
-        }
-        if (p.version) {
-          filter.version = String(p.version)
-        }
-        await Prompt.findOneAndUpdate(
-          filter,
-          {
-            agent: agent._id,
-            systemPrompt: p.systemPrompt,
-            // If version provided, set it; otherwise let schema default apply
-            ...(p.version ? { version: String(p.version) } : {}),
-          },
-          { new: true, upsert: true, setDefaultsOnInsert: true }
-        )
+          ...(p.version ? { version: String(p.version) } : {}),
+        }))
+
+      if (promptDocs.length) {
+        await Prompt.insertMany(promptDocs, { ordered: true })
       }
     }
   }
