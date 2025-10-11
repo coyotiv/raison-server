@@ -37,8 +37,18 @@ const agents = computed(() => agentsStore.agents)
               {{ agent.name }}
             </v-list-item-title>
             <v-list-item-subtitle>
-              {{ agent.prompts?.length || 0 }} prompts
+              <template v-if="agent.systemPrompt">
+                {{ agent.systemPrompt }}
+              </template>
+              <template v-else>
+                <span class="text-medium-emphasis">No system prompt available</span>
+              </template>
             </v-list-item-subtitle>
+            <template #append>
+              <v-chip size="small" variant="tonal">
+                {{ agent.prompts?.length || 0 }} prompts
+              </v-chip>
+            </template>
           </v-list-item>
           <v-list-item v-if="!agents.length && !agentsStore.loading">
             <v-list-item-title>No agents found.</v-list-item-title>

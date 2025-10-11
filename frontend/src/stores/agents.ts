@@ -13,6 +13,7 @@ type AgentDocument = {
   _id: string
   name: string
   prompts?: AgentPrompt[]
+  systemPrompt?: string | null
   [key: string]: unknown
 }
 
