@@ -1,6 +1,6 @@
-import User from './model.js'
-import type { UserDocument } from './model.js'
-import type { UserCreateInput, UserUpdateInput } from './validators.js'
+import User from './model'
+import type { UserDocument } from './model'
+import type { UserCreateInput, UserUpdateInput } from './validators'
 
 export async function listUsers(): Promise<UserDocument[]> {
   const users = await User.find()

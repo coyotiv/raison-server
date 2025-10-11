@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import type { AgentDocument } from './model.js'
+import type { AgentDocument } from './model'
 import {
   agentCreateSchema,
   agentUpdateSchema,
@@ -11,7 +11,7 @@ import {
   AgentIdParams,
   AgentListQuery,
   AgentPromptCreateInput,
-} from './validators.js'
+} from './validators'
 import {
   listAgents,
   findAgentById,
@@ -19,9 +19,9 @@ import {
   updateAgent,
   appendAgentPrompt,
   deleteAgent,
-} from './service.js'
-import { formatZodError } from '@/lib/error-handler.js'
-import { ErrorResponse } from '@/types.js'
+} from './service'
+import { formatZodError } from '@/lib/error-handler'
+import { ErrorResponse } from '@/types'
 
 const agentsRouter = Router()
 

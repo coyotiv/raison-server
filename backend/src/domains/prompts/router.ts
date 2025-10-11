@@ -8,15 +8,15 @@ import {
   PromptCreateInput,
   PromptUpdateInput,
   PromptIdParams,
-} from './validators.js'
+} from './validators'
 import {
   listPrompts,
   findPromptById,
   createPrompt,
   updatePrompt,
   deletePrompt,
-} from './service.js'
-import { formatZodError } from '@/lib/error-handler.js'
+} from './service'
+import { formatZodError } from '@/lib/error-handler'
 
 const promptsRouter = Router()
 

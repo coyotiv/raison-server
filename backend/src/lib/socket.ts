@@ -1,9 +1,9 @@
 import type { Server as HTTPServer } from 'http'
 import type { Application } from 'express'
 import { Server, Socket } from 'socket.io'
-import { initializeChangeStreams, handleSocketConnection } from './change-streams.js'
-import type { SocketAuth } from '../types.js'
-import { auth } from '../domains/auth/config.js'
+import { initializeChangeStreams, handleSocketConnection } from './change-streams'
+import type { SocketAuth } from '@/types'
+import { auth } from '@/domains/auth/config'
 import { fromNodeHeaders } from 'better-auth/node'
 
 let ioInstance: Server | null = null

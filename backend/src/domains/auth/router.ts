@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { toNodeHandler } from 'better-auth/node'
 import express from 'express'
-import { getSession, getAuthHandler } from './service.js'
+import { getSession, getAuthHandler } from './service'
 
 export async function getSessionHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

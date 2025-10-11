@@ -1,12 +1,12 @@
 import mongoose, { ClientSession } from 'mongoose'
-import Agent from './model.js'
-import Prompt from '../prompts/model.js'
-import type { AgentDocument } from './model.js'
+import Agent from './model'
+import Prompt from '@/domains/prompts/model'
+import type { AgentDocument } from './model'
 import type {
   AgentCreateInput,
   AgentUpdateInput,
   AgentPromptCreateInput,
-} from './validators.js'
+} from './validators'
 
 async function runWithSession<T>(operation: (session: ClientSession) => Promise<T>): Promise<T> {
   const session = await mongoose.startSession()

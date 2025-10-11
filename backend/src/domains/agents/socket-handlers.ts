@@ -1,12 +1,12 @@
 import type { Socket } from 'socket.io'
-import type { AgentsInitialEvent } from '@/types.js'
+import type { AgentsInitialEvent } from '@/types'
 import {
   agentCreateSchema,
   agentUpdateSchema,
   agentIdParamSchema,
   agentListQuerySchema,
   agentPromptCreateSchema,
-} from './validators.js'
+} from './validators'
 import {
   listAgents,
   findAgentById,
@@ -14,14 +14,14 @@ import {
   updateAgent,
   appendAgentPrompt,
   deleteAgent,
-} from './service.js'
+} from './service'
 import {
   respondWithError,
   respondWithSuccess,
   formatUnknownError,
-} from '@/domains/shared/socket.js'
-import { toAgentPayload } from '@/domains/shared/serialization.js'
-import { formatZodError } from '@/lib/error-handler.js'
+} from '@/domains/shared/socket'
+import { toAgentPayload } from '@/domains/shared/serialization'
+import { formatZodError } from '@/lib/error-handler'
 
 function registerAgentSocketHandlers(socket: Socket): void {
   async function emitInitialAgents(): Promise<void> {

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { objectIdSchema } from '@/domains/shared/validators/index.js'
+import { objectIdSchema } from '@/domains/shared/validators'
 
 export const userCreateSchema = z.object({
   name: z.string().trim().min(1, 'User name is required'),

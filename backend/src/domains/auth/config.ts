@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { apiKey } from 'better-auth/plugins'
-import { connection } from '../../lib/database-connection.js'
+import { connection } from '@/lib/database-connection'
 
 const secret = process.env.BETTER_AUTH_SECRET
 if (!secret) {

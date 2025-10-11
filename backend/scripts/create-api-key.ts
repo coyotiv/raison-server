@@ -1,7 +1,7 @@
 import 'dotenv/config'
-import { connection } from '../src/lib/database-connection.js'
-import { auth } from '../src/lib/auth.js'
-import User from '../src/domains/users/model.js'
+import { connection } from '../src/lib/database-connection'
+import { auth } from '../src/domains/auth/config'
+import User from '../src/domains/users/model'
 
 async function ensureDatabaseConnection(): Promise<void> {
   if (connection.readyState === 1) {

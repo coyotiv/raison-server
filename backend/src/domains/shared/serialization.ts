@@ -1,7 +1,7 @@
-import type { AgentDocument } from '../agents/model.js'
-import type { PromptDocument } from '../prompts/model.js'
-import type { UserDocument } from '../users/model.js'
-import type { AgentPayload, PromptPayload, UserPayload } from '../../types.js'
+import type { AgentDocument } from '@/domains/agents/model'
+import type { PromptDocument } from '@/domains/prompts/model'
+import type { UserDocument } from '@/domains/users/model'
+import type { AgentPayload, PromptPayload, UserPayload } from '@/types'
 
 export function toAgentPayload(agent: AgentDocument): AgentPayload {
   const json = agent.toJSON() as AgentPayload

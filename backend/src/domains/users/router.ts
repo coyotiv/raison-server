@@ -6,15 +6,15 @@ import {
   UserCreateInput,
   UserUpdateInput,
   UserIdParams,
-} from './validators.js'
+} from './validators'
 import {
   listUsers,
   findUserById,
   createUser,
   updateUser,
   deleteUser,
-} from './service.js'
-import { formatZodError } from '@/lib/error-handler.js'
+} from './service'
+import { formatZodError } from '@/lib/error-handler'
 
 const usersRouter = Router()
 

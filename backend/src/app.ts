@@ -4,11 +4,11 @@ import cookieParser from 'cookie-parser'
 import logger from 'morgan'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import usersRouter from './domains/users/router.js'
-import agentsRouter from './domains/agents/router.js'
-import promptsRouter from './domains/prompts/router.js'
-import './lib/database-connection.js'
-import authRouter, { getSessionHandler } from './domains/auth/router.js'
+import usersRouter from '@/domains/users/router'
+import agentsRouter from '@/domains/agents/router'
+import promptsRouter from '@/domains/prompts/router'
+import authRouter, { getSessionHandler } from '@/domains/auth/router'
+import '@/lib/database-connection'
 
 dotenv.config()
 

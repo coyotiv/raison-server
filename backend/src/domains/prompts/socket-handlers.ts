@@ -4,17 +4,17 @@ import {
   promptCreateSchema,
   promptUpdateSchema,
   promptIdParamSchema,
-} from './validators.js'
+} from './validators'
 import {
   listPrompts,
   findPromptById,
   createPrompt,
   updatePrompt,
   deletePrompt,
-} from './service.js'
-import { respondWithError, respondWithSuccess, formatUnknownError } from '@/domains/shared/socket.js'
-import { toAgentPayload, toPromptPayload } from '@/domains/shared/serialization.js'
-import type { PromptsInitialEvent } from '@/types.js'
+} from './service'
+import { respondWithError, respondWithSuccess, formatUnknownError } from '@/domains/shared/socket'
+import { toAgentPayload, toPromptPayload } from '@/domains/shared/serialization'
+import type { PromptsInitialEvent } from '@/types'
 
 function registerPromptSocketHandlers(socket: Socket): void {
   async function emitInitialPrompts(): Promise<void> {

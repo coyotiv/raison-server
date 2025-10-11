@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "rootDir": "./",
     "outDir": "./dist",
     "esModuleInterop": true,
@@ -17,6 +17,6 @@
     }
   },
   "typeRoots": ["./types", "./node_modules/@types"],
-  "include": ["bin/**/*.ts", "src/**/*.ts", "types/**/*.d.ts", "bin/www", "bin/www"],
+  "include": ["bin/**/*.ts", "src/**/*.ts", "types/**/*.d.ts", "bin/www"],
   "exclude": ["node_modules", "dist"]
 }

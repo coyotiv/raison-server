@@ -1,24 +1,24 @@
 import type { Socket } from 'socket.io'
-import type { UsersInitialEvent } from '@/types.js'
+import type { UsersInitialEvent } from '@/types'
 import {
   userCreateSchema,
   userUpdateSchema,
   userIdParamSchema,
-} from './validators.js'
+} from './validators'
 import {
   listUsers,
   findUserById,
   createUser,
   updateUser,
   deleteUser,
-} from './service.js'
+} from './service'
 import {
   respondWithError,
   respondWithSuccess,
   formatUnknownError,
-} from '@/domains/shared/socket.js'
-import { toUserPayload } from '@/domains/shared/serialization.js'
-import { formatZodError } from '@/lib/error-handler.js'
+} from '@/domains/shared/socket'
+import { toUserPayload } from '@/domains/shared/serialization'
+import { formatZodError } from '@/lib/error-handler'
 
 function registerUserSocketHandlers(socket: Socket): void {
   async function emitInitialUsers(): Promise<void> {

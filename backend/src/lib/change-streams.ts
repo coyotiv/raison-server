@@ -9,13 +9,13 @@ import type {
 } from 'mongodb'
 import type { Server as SocketIOServer, Socket } from 'socket.io'
 import type { Types } from 'mongoose'
-import Agent, { AgentDocument } from '../domains/agents/model.js'
-import Prompt from '../domains/prompts/model.js'
-import type { AgentChangedEvent, AgentDeletedEvent, AgentPayload } from '../types.js'
-import { toAgentPayload } from '../domains/shared/serialization.js'
-import registerAgentSocketHandlers from '../domains/agents/socket-handlers.js'
-import registerPromptSocketHandlers from '../domains/prompts/socket-handlers.js'
-import registerUserSocketHandlers from '../domains/users/socket-handlers.js'
+import Agent, { AgentDocument } from '@/domains/agents/model'
+import Prompt from '@/domains/prompts/model'
+import type { AgentChangedEvent, AgentDeletedEvent, AgentPayload } from '@/types'
+import { toAgentPayload } from '@/domains/shared/serialization'
+import registerAgentSocketHandlers from '@/domains/agents/socket-handlers'
+import registerPromptSocketHandlers from '@/domains/prompts/socket-handlers'
+import registerUserSocketHandlers from '@/domains/users/socket-handlers'
 
 type GenericChangeStream = ChangeStream<MongoDocument>
 

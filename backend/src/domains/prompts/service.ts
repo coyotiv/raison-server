@@ -1,8 +1,8 @@
-import Prompt from './model.js'
-import Agent from '../agents/model.js'
-import type { PromptDocument } from './model.js'
-import type { AgentDocument } from '../agents/model.js'
-import type { PromptCreateInput, PromptUpdateInput } from './validators.js'
+import Prompt from './model'
+import Agent from '@/domains/agents/model'
+import type { PromptDocument } from './model'
+import type { AgentDocument } from '@/domains/agents/model'
+import type { PromptCreateInput, PromptUpdateInput } from './validators'
 
 export async function listPrompts(agentId?: string): Promise<PromptDocument[]> {
   const filter: Record<string, unknown> = {}

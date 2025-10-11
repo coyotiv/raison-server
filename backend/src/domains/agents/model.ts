@@ -1,6 +1,6 @@
 import { Schema, model, HydratedDocument, Model, InferSchemaType, Types } from 'mongoose'
 import autopopulate from 'mongoose-autopopulate'
-import type { PromptDocument } from '../prompts/model.js'
+import type { PromptDocument } from '@/domains/prompts/model'
 
 const agentSchema = new Schema(
   {
