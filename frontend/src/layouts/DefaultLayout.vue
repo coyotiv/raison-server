@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-app-bar flat>
-      <v-app-bar-title>My App</v-app-bar-title>
+      <v-app-bar-title>Raison</v-app-bar-title>
 
       <slot name="appbar-actions" />
     </v-app-bar>

@@ -1,9 +1,9 @@
 <template>
   <v-app>
-    <v-main>
-      <v-container class="fill-height d-flex align-center justify-center">
+    <v-main class="pa-0">
+      <div style="min-height: 100vh; display: grid; place-items: center">
         <slot />
-      </v-container>
+      </div>
     </v-main>
   </v-app>
 </template>
