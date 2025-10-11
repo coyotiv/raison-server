@@ -11,22 +11,26 @@ function resolveApiUrl(path: string): string {
   return `http://api.localhost${path}`
 }
 
-type AgentPrompt = {
-  _id?: string
-  systemPrompt?: string
-  version?: string
-  [key: string]: unknown
+export type AgentPrompt = {
+  _id: string
+  agent: string
+  systemPrompt: string
+  version: string
+  createdAt: string
+  updatedAt: string
 }
 
-type AgentDocument = {
+export type AgentDocument = {
   _id: string
+  id: string
   name: string
   prompts?: AgentPrompt[]
   systemPrompt?: string | null
-  [key: string]: unknown
+  createdAt: string
+  updatedAt: string
 }
 
-type AgentsChangeEvent = {
+export type AgentsChangeEvent = {
   operationType: string
   documentKey?: { _id?: string }
   fullDocument?: AgentDocument | null

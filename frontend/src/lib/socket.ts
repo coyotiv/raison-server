@@ -40,6 +40,9 @@ export function getSocket(): SocketInstance {
       path: resolveSocketPath(),
       transports: ['websocket'],
       withCredentials: true,
+      auth: {
+        apiKey: import.meta.env.VITE_SOCKET_API_KEY,
+      },
     })
   }
 

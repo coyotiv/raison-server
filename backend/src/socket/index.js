@@ -1,6 +1,6 @@
 const { Server } = require('socket.io')
-const { initializeAgentChangeStream } = require('../change-streams')
 const Agent = require('../models/agent')
+const { initializeChangeStreams } = require('../change-streams')
 
 let ioInstance
 
@@ -70,7 +70,7 @@ function initializeSocket(server, { app } = {}) {
     app.set('io', ioInstance)
   }
 
-  initializeAgentChangeStream(ioInstance)
+  initializeChangeStreams(ioInstance)
 
   return ioInstance
 }

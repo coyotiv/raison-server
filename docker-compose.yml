@@ -37,7 +37,7 @@ services:
       - PORT=3000
       - MONGODB_CONNECTION_STRING=mongodb://mongo:27017
       - CORS_ORIGINS=http://localhost,http://localhost:5173,http://api.localhost
-      - API_KEY=test-key
+      - API_KEY=${API_KEY:-test-key}
       - SEED_FILE=${SEED_FILE:-}
     command: sh -c "npm install && npm run dev"
     volumes:
@@ -63,6 +63,7 @@ services:
     environment:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
+      - VITE_SOCKET_API_KEY=${API_KEY:-test-key}
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
     volumes:
       - ./frontend:/app
