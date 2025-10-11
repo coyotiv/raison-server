@@ -9,14 +9,19 @@ const agentSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-agentSchema.virtual('systemPrompt', {
-  ref: 'Prompt',
-  localField: '_id',
-  foreignField: 'agent',
-  justOne: true,
-  limit: 1,
-  sort: { createdAt: -1 },
-  options: { autopopulate: true },
+agentSchema.virtual('systemPrompt').get(function () {
+  if (!this.prompts || this.prompts.length === 0) {
+    return null
+  }
+  // Get the latest prompt by updatedAt
+  const latestPrompt = this.prompts.reduce((latest, current) => {
+    if (!latest) return current
+    const latestDate = latest.updatedAt || latest.createdAt
+    const currentDate = current.updatedAt || current.createdAt
+    return currentDate > latestDate ? current : latest
+  }, null)
+
+  return latestPrompt ? latestPrompt.systemPrompt : null
 })
 
 // Include virtuals when converting to JSON / Object
