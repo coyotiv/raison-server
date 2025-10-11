@@ -21,15 +21,27 @@ function resolveSocketUrl(): string {
     return explicitUrl
   }
 
+  // When running frontend dev server directly (not through Docker)
   if (import.meta.env.DEV && window.location.hostname === 'localhost' && window.location.port === '5173') {
     return 'http://localhost:3000'
   }
 
+  // When running through Docker/Traefik or production
   return `${window.location.protocol}//${window.location.host}`
 }
 
 function resolveSocketPath(): string {
-  return import.meta.env.VITE_SOCKET_PATH || '/socket.io'
+  if (import.meta.env.VITE_SOCKET_PATH) {
+    return import.meta.env.VITE_SOCKET_PATH
+  }
+
+  // Direct connection to backend (dev mode) - backend socket.io path is /socket.io
+  if (import.meta.env.DEV && window.location.hostname === 'localhost' && window.location.port === '5173') {
+    return '/socket.io'
+  }
+
+  // Through Traefik - request /api/socket.io, Traefik strips /api, backend receives /socket.io
+  return '/api/socket.io'
 }
 
 export function getSocket(): SocketInstance {

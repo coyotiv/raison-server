@@ -51,6 +51,8 @@ services:
       - "traefik.http.routers.backend.middlewares=api-stripprefix"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
+      - "traefik.http.services.backend.loadbalancer.server.scheme=http"
+      - "traefik.http.services.backend.loadbalancer.passhostheader=true"
     depends_on:
       mongo:
         condition: service_healthy

@@ -9,6 +9,7 @@ function initializeSocket(server, { app } = {}) {
   }
 
   ioInstance = new Server(server, {
+    path: '/socket.io',
     cors: {
       origin: process.env.NODE_ENV === 'production' ? false : true,
       methods: ['GET', 'POST'],
