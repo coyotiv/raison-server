@@ -1,6 +1,4 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import Prompt from './model.js'
-import Agent from '../agents/model.js'
 import {
   promptListQuerySchema,
   promptCreateSchema,
@@ -11,12 +9,14 @@ import {
   PromptUpdateInput,
   PromptIdParams,
 } from './validators.js'
-
-type ErrorResponse = { message: string }
-
-function formatZodErrors(message: string): ErrorResponse {
-  return { message }
-}
+import {
+  listPrompts,
+  findPromptById,
+  createPrompt,
+  updatePrompt,
+  deletePrompt,
+} from './service.js'
+import { formatZodError } from '@/lib/error-handler.js'
 
 const promptsRouter = Router()
 
@@ -30,17 +30,10 @@ promptsRouter.get(
     try {
       const parsedQuery = promptListQuerySchema.safeParse(req.query)
       if (!parsedQuery.success) {
-        return res.status(400).json(formatZodErrors(parsedQuery.error.flatten().formErrors.join(', ')))
+        return res.status(400).json({ message: formatZodError(parsedQuery.error) })
       }
 
-      const { agentId } = parsedQuery.data
-      const filter: Record<string, unknown> = {}
-
-      if (agentId !== undefined) {
-        filter.agent = agentId
-      }
-
-      const prompts = await Prompt.find(filter).sort({ createdAt: -1 })
+      const prompts = await listPrompts(parsedQuery.data.agentId)
       return res.json(prompts)
     } catch (error) {
       next(error)
@@ -59,10 +52,10 @@ promptsRouter.get(
     try {
       const parsedParams = promptIdParamSchema.safeParse(req.params)
       if (!parsedParams.success) {
-        return res.status(400).json(formatZodErrors(parsedParams.error.flatten().formErrors.join(', ')))
+        return res.status(400).json({ message: formatZodError(parsedParams.error) })
       }
 
-      const prompt = await Prompt.findById(parsedParams.data.id)
+      const prompt = await findPromptById(parsedParams.data.id)
 
       if (!prompt) {
         return res.sendStatus(404)
@@ -86,24 +79,16 @@ promptsRouter.post(
     try {
       const parsedBody = promptCreateSchema.safeParse(req.body)
       if (!parsedBody.success) {
-        return res.status(400).json(formatZodErrors(parsedBody.error.flatten().formErrors.join(', ')))
+        return res.status(400).json({ message: formatZodError(parsedBody.error) })
       }
 
-      const agent = await Agent.findById(parsedBody.data.agentId)
+      const result = await createPrompt(parsedBody.data)
 
-      if (!agent) {
+      if (result.status === 'AGENT_NOT_FOUND') {
         return res.status(404).json({ message: 'Agent not found' })
       }
 
-      await Prompt.create({
-        agent: agent._id,
-        systemPrompt: parsedBody.data.systemPrompt,
-        ...(parsedBody.data.version ? { version: parsedBody.data.version } : {}),
-      })
-
-      const updatedAgent = await Agent.findById(agent._id)
-
-      return res.status(201).json(updatedAgent)
+      return res.status(201).json(result.agent)
     } catch (error) {
       next(error)
       return undefined
@@ -121,26 +106,21 @@ promptsRouter.put(
     try {
       const parsedParams = promptIdParamSchema.safeParse(req.params)
       if (!parsedParams.success) {
-        return res.status(400).json(formatZodErrors(parsedParams.error.flatten().formErrors.join(', ')))
+        return res.status(400).json({ message: formatZodError(parsedParams.error) })
       }
 
       const parsedBody = promptUpdateSchema.safeParse(req.body)
       if (!parsedBody.success) {
-        return res.status(400).json(formatZodErrors(parsedBody.error.flatten().formErrors.join(', ')))
+        return res.status(400).json({ message: formatZodError(parsedBody.error) })
       }
 
-      const prompt = await Prompt.findByIdAndUpdate(parsedParams.data.id, parsedBody.data, {
-        new: true,
-        runValidators: true,
-      })
+      const result = await updatePrompt(parsedParams.data.id, parsedBody.data)
 
-      if (!prompt) {
+      if (result.status === 'PROMPT_NOT_FOUND') {
         return res.sendStatus(404)
       }
 
-      const updatedAgent = await Agent.findById(prompt.agent)
-
-      return res.json(updatedAgent)
+      return res.json(result.agent)
     } catch (error) {
       next(error)
       return undefined
@@ -158,26 +138,20 @@ promptsRouter.delete(
     try {
       const parsedParams = promptIdParamSchema.safeParse(req.params)
       if (!parsedParams.success) {
-        return res.status(400).json(formatZodErrors(parsedParams.error.flatten().formErrors.join(', ')))
+        return res.status(400).json({ message: formatZodError(parsedParams.error) })
       }
 
-      const prompt = await Prompt.findById(parsedParams.data.id)
+      const result = await deletePrompt(parsedParams.data.id)
 
-      if (!prompt) {
+      if (result.status === 'PROMPT_NOT_FOUND') {
         return res.sendStatus(404)
       }
 
-      const agentId = prompt.agent
-
-      await Prompt.findByIdAndDelete(prompt._id)
-
-      const updatedAgent = await Agent.findById(agentId)
-
-      if (!updatedAgent) {
+      if (!result.agent) {
         return res.sendStatus(204)
       }
 
-      return res.json(updatedAgent)
+      return res.json(result.agent)
     } catch (error) {
       next(error)
       return undefined
@@ -185,5 +159,4 @@ promptsRouter.delete(
   }
 )
 
-export { promptsRouter }
 export default promptsRouter

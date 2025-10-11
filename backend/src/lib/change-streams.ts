@@ -11,7 +11,11 @@ import type { Server as SocketIOServer, Socket } from 'socket.io'
 import type { Types } from 'mongoose'
 import Agent, { AgentDocument } from '../domains/agents/model.js'
 import Prompt from '../domains/prompts/model.js'
-import type { AgentChangedEvent, AgentDeletedEvent, AgentsInitialEvent, AgentPayload } from '../types.js'
+import type { AgentChangedEvent, AgentDeletedEvent, AgentPayload } from '../types.js'
+import { toAgentPayload } from '../domains/shared/serialization.js'
+import registerAgentSocketHandlers from '../domains/agents/socket-handlers.js'
+import registerPromptSocketHandlers from '../domains/prompts/socket-handlers.js'
+import registerUserSocketHandlers from '../domains/users/socket-handlers.js'
 
 type GenericChangeStream = ChangeStream<MongoDocument>
 
@@ -39,9 +43,7 @@ function serializeAgentDocument(agent: AgentDocument | null): AgentPayload | nul
     return null
   }
 
-  const json = agent.toJSON() as AgentPayload
-  json._id = agent._id.toString()
-  return json
+  return toAgentPayload(agent)
 }
 
 async function fetchSerializedAgent(agentId: Types.ObjectId | string): Promise<AgentPayload | null> {
@@ -220,19 +222,10 @@ export async function handleSocketConnection(socket: Socket): Promise<void> {
   console.log(`[socket.io] Client connected: ${socket.id}`)
 
   try {
-    const agents = await Agent.find()
-    const agentObjects: AgentPayload[] = agents.map((agent) => agent.toJSON() as AgentPayload)
-
-    const payload: AgentsInitialEvent = {
-      type: 'agents.initial',
-      at: new Date().toISOString(),
-      agents: agentObjects,
-    }
-
-    socket.emit('agents.initial', payload)
-
-    console.log(`[socket.io] Sent ${agents.length} agents to client ${socket.id}`)
+    registerAgentSocketHandlers(socket)
+    registerPromptSocketHandlers(socket)
+    registerUserSocketHandlers(socket)
   } catch (error) {
-    console.error(`[socket.io] Error sending initial agents to client ${socket.id}:`, error)
+    console.error(`[socket.io] Error registering socket handlers for client ${socket.id}:`, error)
   }
 }

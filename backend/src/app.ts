@@ -8,7 +8,7 @@ import { usersRouter } from './domains/users/index.js'
 import { agentsRouter } from './domains/agents/index.js'
 import { promptsRouter } from './domains/prompts/index.js'
 import './lib/database-connection.js'
-import authRouter, { getSessionHandler } from './domains/auth/controller.js'
+import authRouter, { getSessionHandler } from './domains/auth/router.js'
 
 dotenv.config()
 

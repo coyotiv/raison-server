@@ -24,6 +24,32 @@ export type AgentsInitialEvent = {
   agents: AgentPayload[]
 }
 
+export type PromptPayload = {
+  _id: string
+  agent: string
+  systemPrompt: string
+  version?: string
+  [key: string]: unknown
+}
+
+export type PromptsInitialEvent = {
+  type: 'prompts.initial'
+  at: string
+  prompts: PromptPayload[]
+}
+
+export type UserPayload = {
+  _id: string
+  name: string
+  [key: string]: unknown
+}
+
+export type UsersInitialEvent = {
+  type: 'users.initial'
+  at: string
+  users: UserPayload[]
+}
+
 export type SocketAuth = {
   apiKey?: string
 }
@@ -41,3 +67,5 @@ export type SeedAgent = {
 export type SeedFile = {
   agents: SeedAgent[]
 }
+
+export type ErrorResponse = { message: string }

@@ -1,5 +1,5 @@
 export { default as User } from './model.js'
 export * from './model.js'
 export * from './validators.js'
-export { usersRouter } from './controller.js'
-export { default as usersRouterDefault } from './controller.js'
+export { default as usersRouter } from './router.js'
+export * from './service.js'

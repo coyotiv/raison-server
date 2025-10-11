@@ -1,8 +1,6 @@
 import type { Server as HTTPServer } from 'http'
 import type { Application } from 'express'
 import { Server, Socket } from 'socket.io'
-import Agent from '../domains/agents/model.js'
-import type { AgentDocument } from '../domains/agents/model.js'
 import { initializeChangeStreams, handleSocketConnection } from './change-streams.js'
 import type { SocketAuth } from '../types.js'
 import { auth } from '../domains/auth/config.js'
@@ -113,16 +111,3 @@ export function getSocket(): Server {
   return ioInstance
 }
 
-export async function broadcastAgents(): Promise<void> {
-  if (!ioInstance) {
-    return
-  }
-
-  const agents = await Agent.find()
-  const payload = {
-    type: 'agents.initial',
-    at: new Date().toISOString(),
-    agents: agents.map((agent: AgentDocument) => agent.toJSON()),
-  }
-  ioInstance.emit('agents.initial', payload)
-}

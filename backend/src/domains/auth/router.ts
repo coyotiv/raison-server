@@ -1,14 +1,11 @@
 import type { Request, Response, NextFunction } from 'express'
-import { fromNodeHeaders } from 'better-auth/node'
-import { auth } from './config.js'
 import { toNodeHandler } from 'better-auth/node'
 import express from 'express'
+import { getSession, getAuthHandler } from './service.js'
 
 export async function getSessionHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const session = await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })
+    const session = await getSession(req.headers)
 
     res.json(session)
   } catch (error) {
@@ -17,6 +14,6 @@ export async function getSessionHandler(req: Request, res: Response, next: NextF
 }
 
 const authRouter = express.Router()
-authRouter.all('/api/auth/{*any}', toNodeHandler(auth))
+authRouter.all('/api/auth/{*any}', toNodeHandler(getAuthHandler()))
 
 export default authRouter
