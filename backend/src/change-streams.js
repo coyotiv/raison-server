@@ -11,15 +11,26 @@ function startAgentChangeStream(io) {
 
   agentChangeStream = Agent.watch([], { fullDocument: 'updateLookup' })
 
-  agentChangeStream.on('change', (change) => {
+  agentChangeStream.on('change', async change => {
     console.log('[change-stream] Agent change detected:', change.operationType)
 
-    io.emit('agents', {
-      operationType: change.operationType,
-      documentKey: change.documentKey,
-      fullDocument: change.fullDocument,
-      updateDescription: change.updateDescription,
-    })
+    // Fetch the full document with populated fields if needed
+    let agent = change.fullDocument
+    if (!agent && change.documentKey) {
+      // For delete operations or when fullDocument is not available
+      agent = await Agent.findById(change.documentKey._id)
+    }
+
+    if (agent) {
+      // Convert to JSON to ensure virtuals are included
+      const agentObj = agent.toJSON ? agent.toJSON() : agent
+
+      io.emit('agent.changed', {
+        type: 'agent.changed',
+        at: new Date().toISOString(),
+        agent: agentObj,
+      })
+    }
   })
 
   agentChangeStream.on('error', (error) => {
