@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "dev": "tsx watch --clear-screen=false ./src/server.ts",
     "lint": "pretty-quick -w . && eslint . --fix",
     "lint-staged": "lint-staged",
