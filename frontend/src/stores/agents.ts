@@ -2,6 +2,15 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import type { Socket } from 'socket.io-client'
 
+function resolveApiUrl(path: string): string {
+  // When running frontend dev server directly (not through Docker)
+  if (import.meta.env.DEV && window.location.hostname === 'localhost' && window.location.port === '5173') {
+    return `http://localhost:3000${path}`
+  }
+  // When running through Docker/Traefik - use api.localhost subdomain
+  return `http://api.localhost${path}`
+}
+
 type AgentPrompt = {
   _id?: string
   systemPrompt?: string
@@ -55,7 +64,7 @@ export const useAgentsStore = defineStore('agents', {
       this.loading = true
       this.error = null
       try {
-        const response = await axios.get<AgentDocument[]>('/api/agents')
+        const response = await axios.get<AgentDocument[]>(resolveApiUrl('/agents'))
         this.agents = response.data || []
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to load agents'

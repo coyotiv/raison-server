@@ -3,6 +3,7 @@ const express = require('express')
 const path = require('path')
 const cookieParser = require('cookie-parser')
 const logger = require('morgan')
+const cors = require('cors')
 require('dotenv').config()
 
 const indexRouter = require('./routes/index')
@@ -12,6 +13,18 @@ const agentsRouter = require('./routes/agents')
 require('./database-connection')
 
 const app = express()
+
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
+  : ['http://localhost', 'http://localhost:5173']
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  })
+)
 
 app.use(logger('dev'))
 app.use(express.json())

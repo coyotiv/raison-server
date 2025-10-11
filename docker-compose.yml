@@ -36,21 +36,24 @@ services:
       - NODE_ENV=development
       - PORT=3000
       - MONGODB_CONNECTION_STRING=mongodb://mongo:27017
+      - CORS_ORIGINS=http://localhost,http://localhost:5173
       - SEED_FILE=${SEED_FILE:-}
     command: sh -c "npm install && npm run dev"
     volumes:
       - ./backend:/app
-      - ./agents.json:/app/agents.json:ro
       - /app/node_modules
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.backend.entrypoints=web"
-      - "traefik.http.routers.backend.priority=100"
-      - "traefik.http.routers.backend.service=backend"
-      - "traefik.http.routers.backend.middlewares=api-stripprefix"
+      # API router on api.localhost
+      - "traefik.http.routers.backend-api.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.backend-api.entrypoints=web"
+      - "traefik.http.routers.backend-api.service=backend"
+      # Socket.IO router on socket.localhost
+      - "traefik.http.routers.backend-socket.rule=Host(`socket.localhost`)"
+      - "traefik.http.routers.backend-socket.entrypoints=web"
+      - "traefik.http.routers.backend-socket.service=backend"
+      # Backend service configuration
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
       - "traefik.http.services.backend.loadbalancer.server.scheme=http"
       - "traefik.http.services.backend.loadbalancer.passhostheader=true"
     depends_on:

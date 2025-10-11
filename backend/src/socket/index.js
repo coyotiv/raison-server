@@ -8,10 +8,14 @@ function initializeSocket(server, { app } = {}) {
     return ioInstance
   }
 
+  const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
+    : ['http://localhost', 'http://localhost:5173']
+
   ioInstance = new Server(server, {
     path: '/socket.io',
     cors: {
-      origin: process.env.NODE_ENV === 'production' ? false : true,
+      origin: allowedOrigins,
       methods: ['GET', 'POST'],
       credentials: true,
     },
