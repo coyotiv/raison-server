@@ -40,6 +40,12 @@ export type AgentsChangeEvent = {
   }
 }
 
+type AgentsInitialEvent = {
+  type: 'agents.initial'
+  at: string
+  agents: AgentDocument[]
+}
+
 interface AgentsState {
   agents: AgentDocument[]
   loading: boolean
@@ -68,12 +74,124 @@ export const useAgentsStore = defineStore('agents', {
       this.loading = true
       this.error = null
       try {
-        const response = await axios.get<AgentDocument[]>(resolveApiUrl('/agents'))
+        const response = await axios.get<AgentDocument[]>(resolveApiUrl('/agents'), {
+          withCredentials: true,
+        })
         this.agents = response.data || []
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to load agents'
       } finally {
         this.loading = false
+      }
+    },
+    upsertAgent(agent: AgentDocument) {
+      const index = this.agents.findIndex((item) => item._id === agent._id)
+      if (index === -1) {
+        this.agents.push(agent)
+      } else {
+        this.agents.splice(index, 1, agent)
+      }
+    },
+    removeAgent(agentId: string) {
+      const index = this.agents.findIndex((item) => item._id === agentId)
+      if (index !== -1) {
+        this.agents.splice(index, 1)
+      }
+    },
+    async createAgent(name: string) {
+      this.error = null
+      try {
+        const response = await axios.post<AgentDocument>(
+          resolveApiUrl('/agents'),
+          { name },
+          { withCredentials: true }
+        )
+        if (response.data) {
+          this.upsertAgent(response.data)
+        }
+        return response.data
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to create agent'
+        throw err
+      }
+    },
+    async updateAgent(agentId: string, payload: { name: string }) {
+      this.error = null
+      try {
+        const response = await axios.put<AgentDocument>(
+          resolveApiUrl(`/agents/${agentId}`),
+          payload,
+          { withCredentials: true }
+        )
+        if (response.data) {
+          this.upsertAgent(response.data)
+        }
+        return response.data
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to update agent'
+        throw err
+      }
+    },
+    async deleteAgent(agentId: string) {
+      this.error = null
+      try {
+        await axios.delete(resolveApiUrl(`/agents/${agentId}`), { withCredentials: true })
+        this.removeAgent(agentId)
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to delete agent'
+        throw err
+      }
+    },
+    async createPrompt(agentId: string, payload: { systemPrompt: string; version?: string }) {
+      this.error = null
+      try {
+        const response = await axios.post<AgentDocument>(
+          resolveApiUrl(`/agents/${agentId}/prompts`),
+          payload,
+          { withCredentials: true }
+        )
+        if (response.data) {
+          this.upsertAgent(response.data)
+        }
+        return response.data
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to create prompt'
+        throw err
+      }
+    },
+    async updatePrompt(promptId: string, payload: { systemPrompt?: string; version?: string }) {
+      this.error = null
+      try {
+        const response = await axios.put<AgentDocument>(
+          resolveApiUrl(`/prompts/${promptId}`),
+          payload,
+          { withCredentials: true }
+        )
+        if (response.data) {
+          this.upsertAgent(response.data)
+        }
+        return response.data
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to update prompt'
+        throw err
+      }
+    },
+    async deletePrompt(promptId: string) {
+      this.error = null
+      try {
+        const response = await axios.delete<AgentDocument | void>(
+          resolveApiUrl(`/prompts/${promptId}`),
+          { withCredentials: true }
+        )
+        if (response.data) {
+          this.upsertAgent(response.data)
+        } else {
+          // If no data returned, refetch to ensure consistency
+          await this.fetchAgents()
+        }
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to delete prompt'
+        throw err
       }
     },
     handleChangeEvent(event: AgentsChangeEvent) {
@@ -132,6 +250,12 @@ export const useAgentsStore = defineStore('agents', {
 
       socket.on('agents', (payload: AgentsChangeEvent) => {
         this.handleChangeEvent(payload)
+      })
+
+      socket.on('agents.initial', (payload: AgentsInitialEvent) => {
+        if (Array.isArray(payload.agents)) {
+          this.agents = payload.agents
+        }
       })
 
       this.isSocketInitialized = true
