@@ -9,6 +9,15 @@ const promptSchema = new mongoose.Schema(
       ref: 'Agent',
       required: true,
     },
+    version: {
+      type: String,
+      default: function () {
+        // Use MongoDB ObjectId timestamp as the default version string
+        const ts = this && this._id && this._id.getTimestamp ? this._id.getTimestamp() : this.createdAt || new Date()
+        return new Date(ts).toISOString()
+      },
+      immutable: true,
+    },
   },
   { timestamps: true }
 )

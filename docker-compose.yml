@@ -36,13 +36,12 @@ services:
       - NODE_ENV=development
       - PORT=3000
       - MONGODB_CONNECTION_STRING=mongodb://mongo:27017
+      - SEED_FILE=${SEED_FILE:-}
     command: sh -c "npm install && npm run dev"
     volumes:
       - ./backend:/app
+      - ./agents.json:/app/agents.json:ro
       - /app/node_modules
-    depends_on:
-      mongo:
-        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
@@ -52,6 +51,9 @@ services:
       - "traefik.http.routers.backend.middlewares=api-stripprefix"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
+    depends_on:
+      mongo:
+        condition: service_healthy
 
   frontend:
     image: node:20-alpine
