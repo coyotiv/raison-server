@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import type { Socket } from 'socket.io'
 import {
   userCreateSchema,
   userUpdateSchema,
@@ -15,9 +14,7 @@ import {
   updateUser,
   deleteUser,
 } from './service.js'
-import { respondWithError, respondWithSuccess, formatUnknownError } from '../shared/socket.js'
-import { toUserPayload } from '../shared/serialization.js'
-import type { UsersInitialEvent } from '../../types.js'
+import { formatZodError } from '@/lib/error-handler.js'
 
 const usersRouter = Router()
 
@@ -36,7 +33,7 @@ usersRouter.get(
     try {
       const parsedParams = userIdParamSchema.safeParse(req.params)
       if (!parsedParams.success) {
-        return res.status(400).json({ message: parsedParams.error.flatten().formErrors.join(', ') })
+        return res.status(400).json({ message: formatZodError(parsedParams.error) })
       }
 
       const user = await findUserById(parsedParams.data.id)
@@ -59,7 +56,7 @@ usersRouter.post(
     try {
       const parsedBody = userCreateSchema.safeParse(req.body)
       if (!parsedBody.success) {
-        return res.status(400).json({ message: parsedBody.error.flatten().formErrors.join(', ') })
+        return res.status(400).json({ message: formatZodError(parsedBody.error) })
       }
 
       const user = await createUser(parsedBody.data)
@@ -81,12 +78,12 @@ usersRouter.put(
     try {
       const parsedParams = userIdParamSchema.safeParse(req.params)
       if (!parsedParams.success) {
-        return res.status(400).json({ message: parsedParams.error.flatten().formErrors.join(', ') })
+        return res.status(400).json({ message: formatZodError(parsedParams.error) })
       }
 
       const parsedBody = userUpdateSchema.safeParse(req.body)
       if (!parsedBody.success) {
-        return res.status(400).json({ message: parsedBody.error.flatten().formErrors.join(', ') })
+        return res.status(400).json({ message: formatZodError(parsedBody.error) })
       }
 
       const user = await updateUser(parsedParams.data.id, parsedBody.data)

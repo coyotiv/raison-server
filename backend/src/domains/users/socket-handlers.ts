@@ -1,5 +1,5 @@
 import type { Socket } from 'socket.io'
-import type { UsersInitialEvent } from '../../types.js'
+import type { UsersInitialEvent } from '@/types.js'
 import {
   userCreateSchema,
   userUpdateSchema,
@@ -16,8 +16,8 @@ import {
   respondWithError,
   respondWithSuccess,
   formatUnknownError,
-} from '../shared/socket.js'
-import { toUserPayload } from '../shared/serialization.js'
+} from '@/domains/shared/socket.js'
+import { toUserPayload } from '@/domains/shared/serialization.js'
 import { formatZodError } from '@/lib/error-handler.js'
 
 function registerUserSocketHandlers(socket: Socket): void {

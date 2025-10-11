@@ -1,5 +1,5 @@
 import type { Socket } from 'socket.io'
-import type { AgentsInitialEvent } from '../../types.js'
+import type { AgentsInitialEvent } from '@/types.js'
 import {
   agentCreateSchema,
   agentUpdateSchema,
@@ -19,8 +19,8 @@ import {
   respondWithError,
   respondWithSuccess,
   formatUnknownError,
-} from '../shared/socket.js'
-import { toAgentPayload } from '../shared/serialization.js'
+} from '@/domains/shared/socket.js'
+import { toAgentPayload } from '@/domains/shared/serialization.js'
 import { formatZodError } from '@/lib/error-handler.js'
 
 function registerAgentSocketHandlers(socket: Socket): void {

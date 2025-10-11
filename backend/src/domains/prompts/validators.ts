@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { objectIdSchema } from '../shared/validators/index.js'
+import { objectIdSchema } from '@/domains/shared/validators/index.js'
 
 export const promptListQuerySchema = z.object({
   agentId: objectIdSchema.optional(),

@@ -12,9 +12,9 @@ import {
   updatePrompt,
   deletePrompt,
 } from './service.js'
-import { respondWithError, respondWithSuccess, formatUnknownError } from '../shared/socket.js'
-import { toAgentPayload, toPromptPayload } from '../shared/serialization.js'
-import type { PromptsInitialEvent } from '../../types.js'
+import { respondWithError, respondWithSuccess, formatUnknownError } from '@/domains/shared/socket.js'
+import { toAgentPayload, toPromptPayload } from '@/domains/shared/serialization.js'
+import type { PromptsInitialEvent } from '@/types.js'
 
 function registerPromptSocketHandlers(socket: Socket): void {
   async function emitInitialPrompts(): Promise<void> {
