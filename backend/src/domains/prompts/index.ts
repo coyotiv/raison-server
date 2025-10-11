@@ -1,4 +1,4 @@
-export * from './model'
-export * from './validators'
-export { promptsRouter } from './controller'
-export { default as promptsRouterDefault } from './controller'
+export * from './model.js'
+export * from './validators.js'
+export { promptsRouter } from './controller.js'
+export { default as promptsRouterDefault } from './controller.js'

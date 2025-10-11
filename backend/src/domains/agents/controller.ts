@@ -1,9 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import mongoose, { ClientSession } from 'mongoose'
 import { ZodError } from 'zod'
-import Agent from './model'
-import Prompt from '../prompts/model'
-import type { AgentDocument } from './model'
+import Agent from './model.js'
+import Prompt from '../prompts/model.js'
+import type { AgentDocument } from './model.js'
 import {
   agentCreateSchema,
   agentUpdateSchema,
@@ -15,7 +15,7 @@ import {
   AgentIdParams,
   AgentListQuery,
   AgentPromptCreateInput,
-} from './validators'
+} from './validators.js'
 
 type ErrorResponse = { message: string }
 

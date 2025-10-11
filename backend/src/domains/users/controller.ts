@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import User from './model'
-import { userCreateSchema, UserCreateInput } from './validators'
+import User from './model.js'
+import { userCreateSchema, UserCreateInput } from './validators.js'
 
 const usersRouter = Router()
 

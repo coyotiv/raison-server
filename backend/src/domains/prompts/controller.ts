@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import Prompt from './model'
-import Agent from '../agents/model'
+import Prompt from './model.js'
+import Agent from '../agents/model.js'
 import {
   promptListQuerySchema,
   promptCreateSchema,
@@ -10,7 +10,7 @@ import {
   PromptCreateInput,
   PromptUpdateInput,
   PromptIdParams,
-} from './validators'
+} from './validators.js'
 
 type ErrorResponse = { message: string }
 

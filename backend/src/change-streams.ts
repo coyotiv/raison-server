@@ -9,9 +9,9 @@ import type {
 } from 'mongodb'
 import type { Server as SocketIOServer, Socket } from 'socket.io'
 import type { Types } from 'mongoose'
-import Agent, { AgentDocument } from './domains/agents/model'
-import Prompt from './domains/prompts/model'
-import type { AgentChangedEvent, AgentDeletedEvent, AgentsInitialEvent, AgentPayload } from './types'
+import Agent, { AgentDocument } from './domains/agents/model.js'
+import Prompt from './domains/prompts/model.js'
+import type { AgentChangedEvent, AgentDeletedEvent, AgentsInitialEvent, AgentPayload } from './types.js'
 
 type GenericChangeStream = ChangeStream<MongoDocument>
 

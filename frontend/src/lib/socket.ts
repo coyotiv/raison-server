@@ -36,13 +36,12 @@ function resolveSocketPath(): string {
 
 export function getSocket(): SocketInstance {
   if (!socket) {
+    const API_KEY = import.meta.env.VITE_SOCKET_API_KEY || import.meta.env.VITE_BETTER_AUTH_API_KEY
     socket = io(resolveSocketUrl(), {
       path: resolveSocketPath(),
       transports: ['websocket'],
       withCredentials: true,
-      auth: {
-        apiKey: import.meta.env.VITE_SOCKET_API_KEY,
-      },
+      auth: API_KEY ? { apiKey: API_KEY } : undefined,
     })
   }
 

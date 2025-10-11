@@ -4,10 +4,13 @@ import cookieParser from 'cookie-parser'
 import logger from 'morgan'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { usersRouter } from './domains/users'
-import { agentsRouter } from './domains/agents'
-import { promptsRouter } from './domains/prompts'
-import './database-connection'
+import { usersRouter } from './domains/users/index.js'
+import { agentsRouter } from './domains/agents/index.js'
+import { promptsRouter } from './domains/prompts/index.js'
+import { toNodeHandler } from 'better-auth/node'
+import { auth } from './lib/auth.js'
+import { getSessionHandler } from './routes/session.js'
+import './lib/database-connection.js'
 
 dotenv.config()
 
@@ -26,6 +29,7 @@ app.use(
 )
 
 app.use(logger('dev'))
+app.all('/api/auth/{*any}', toNodeHandler(auth))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
@@ -38,6 +42,7 @@ app.get('/ping', (_req: Request, res: Response) => {
   res.sendStatus(200)
 })
 
+app.get('/api/me', getSessionHandler)
 app.use('/users', usersRouter)
 app.use('/agents', agentsRouter)
 app.use('/prompts', promptsRouter)

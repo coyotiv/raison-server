@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { objectIdSchema, promptContentSchema } from '../shared/validators'
+import { objectIdSchema, promptContentSchema } from '../shared/validators/index.js'
 
 const agentBaseSchema = z.object({
   name: z.string().trim().min(1, 'Agent name is required'),

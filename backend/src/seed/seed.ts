@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 import { readFile } from 'fs/promises'
 import path from 'path'
-import Agent, { AgentDocument } from '../domains/agents/model'
-import Prompt from '../domains/prompts/model'
+import Agent, { AgentDocument } from '../domains/agents/model.js'
+import Prompt from '../domains/prompts/model.js'
 
 type SeedPrompt = {
   systemPrompt: string
@@ -65,7 +65,7 @@ export async function seedFromFile(filePath: string): Promise<{ ok: boolean }> {
 
     const prompts = ensureArray(seedAgent.prompts)
       .filter((prompt): prompt is SeedPrompt => Boolean(prompt?.systemPrompt))
-      .map((prompt) => serializePrompt(prompt, agent._id))
+      .map((prompt: SeedPrompt) => serializePrompt(prompt, agent._id))
 
     if (prompts.length) {
       const createdPrompts = await Prompt.insertMany(prompts, { ordered: true })

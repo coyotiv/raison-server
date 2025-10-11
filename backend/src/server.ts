@@ -1,9 +1,9 @@
 import http from 'http'
 import debugModule from 'debug'
-import app from './app'
-import { initializeSocket } from './socket'
-import connection from './database-connection'
-import { seedFromFile } from './seed/seed'
+import app from './app.js'
+import { initializeSocket } from './socket/index.js'
+import connection from './lib/database-connection.js'
+import { seedFromFile } from './seed/seed.js'
 
 const debug = debugModule('backend:server')
 
