@@ -1,3 +1,4 @@
 export * from './model'
 export * from './validators'
-export { createAgentsRouter } from './controller'
+export { agentsRouter } from './controller'
+export { default as agentsRouterDefault } from './controller'

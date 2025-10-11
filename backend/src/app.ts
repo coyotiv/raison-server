@@ -5,8 +5,8 @@ import logger from 'morgan'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { usersRouter } from './domains/users'
-import { createAgentsRouter } from './domains/agents'
-import { createPromptsRouter } from './domains/prompts'
+import { agentsRouter } from './domains/agents'
+import { promptsRouter } from './domains/prompts'
 import './database-connection'
 
 dotenv.config()
@@ -39,8 +39,8 @@ app.get('/ping', (_req: Request, res: Response) => {
 })
 
 app.use('/users', usersRouter)
-app.use('/agents', createAgentsRouter())
-app.use('/prompts', createPromptsRouter())
+app.use('/agents', agentsRouter)
+app.use('/prompts', promptsRouter)
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   next(createError(404))
