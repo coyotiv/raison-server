@@ -7,10 +7,8 @@ import dotenv from 'dotenv'
 import { usersRouter } from './domains/users/index.js'
 import { agentsRouter } from './domains/agents/index.js'
 import { promptsRouter } from './domains/prompts/index.js'
-import { toNodeHandler } from 'better-auth/node'
-import { auth } from './lib/auth.js'
-import { getSessionHandler } from './routes/session.js'
 import './lib/database-connection.js'
+import authRouter, { getSessionHandler } from './domains/auth/controller.js'
 
 dotenv.config()
 
@@ -29,7 +27,7 @@ app.use(
 )
 
 app.use(logger('dev'))
-app.all('/api/auth/{*any}', toNodeHandler(auth))
+app.use(authRouter)
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())

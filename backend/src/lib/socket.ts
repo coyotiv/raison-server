@@ -3,9 +3,10 @@ import type { Application } from 'express'
 import { Server, Socket } from 'socket.io'
 import Agent from '../domains/agents/model.js'
 import type { AgentDocument } from '../domains/agents/model.js'
-import { initializeChangeStreams, handleSocketConnection } from '../change-streams.js'
+import { initializeChangeStreams, handleSocketConnection } from './change-streams.js'
 import type { SocketAuth } from '../types.js'
-import { auth } from '../lib/auth.js'
+import { auth } from '../domains/auth/config.js'
+import { fromNodeHeaders } from 'better-auth/node'
 
 let ioInstance: Server | null = null
 
@@ -44,29 +45,40 @@ export function initializeSocket(server: HTTPServer, { app }: InitializeSocketOp
         .map((raw) => (Array.isArray(raw) ? raw[0] : raw))
         .find((value): value is string => typeof value === 'string' && value.length > 0)
 
-      const providedKey = apiKey ?? headerKey
+      const fallbackKey = process.env.API_KEY
+      const providedKey = apiKey ?? headerKey ?? fallbackKey
 
-      if (!providedKey) {
-        console.log(`[socket.io] Missing API key for socket ${socket.id}`)
-        next(new Error('API key required'))
+      if (providedKey) {
+        const verification = await auth.api.verifyApiKey({
+          body: {
+            key: providedKey,
+          },
+        })
+
+        if (!verification.valid || !verification.key) {
+          const message = verification.error?.message ?? 'Invalid API key'
+          console.log(`[socket.io] Authentication failed for socket ${socket.id}: ${message}`)
+          next(new Error(message))
+          return
+        }
+
+        socket.data.apiKey = verification.key
+        console.log(`[socket.io] Authentication successful for socket ${socket.id} using API key`)
+        next()
         return
       }
 
-      const verification = await auth.api.verifyApiKey({
-        body: {
-          key: providedKey,
-        },
-      })
+      const headers = fromNodeHeaders(socket.handshake.headers)
+      const session = await auth.api.getSession({ headers })
 
-      if (!verification.valid || !verification.key) {
-        const message = verification.error?.message ?? 'Invalid API key'
-        console.log(`[socket.io] Authentication failed for socket ${socket.id}: ${message}`)
-        next(new Error(message))
+      if (!session) {
+        console.log(`[socket.io] Authentication failed for socket ${socket.id}: No API key or session`)
+        next(new Error('Authentication required'))
         return
       }
 
-      socket.data.apiKey = verification.key
-      console.log(`[socket.io] Authentication successful for socket ${socket.id}`)
+      socket.data.session = session
+      console.log(`[socket.io] Authentication successful for socket ${socket.id} using session`)
       next()
     } catch (error) {
       console.error(`[socket.io] Error verifying API key for socket ${socket.id}:`, error)

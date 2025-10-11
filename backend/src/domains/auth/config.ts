@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { apiKey } from 'better-auth/plugins'
-import { connection } from './database-connection.js'
+import { connection } from '../../lib/database-connection.js'
 
 const secret = process.env.BETTER_AUTH_SECRET
 if (!secret) {
@@ -17,8 +17,17 @@ export const auth = betterAuth({
   secret,
   baseURL,
   database: mongodbAdapter(database),
-  plugins: [apiKey()],
+  plugins: [
+    apiKey({
+      rateLimit: {
+        enabled: false,
+      },
+    }),
+  ],
   emailAndPassword: {
     enabled: true,
+  },
+  rateLimit: {
+    enabled: false,
   },
 })
