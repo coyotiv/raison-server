@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { mongodbAdapter } from 'better-auth/adapters/mongodb'
-import { apiKey } from 'better-auth/plugins'
+import { apiKey, organization } from 'better-auth/plugins'
+import { ensureOrganizationCollections } from './ensure-organization-collections'
 import { connection } from '@/lib/database-connection'
 
 const secret = process.env.BETTER_AUTH_SECRET
@@ -13,6 +14,10 @@ const baseURL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'
 const mongoClient = connection.getClient()
 const database = mongoClient.db()
 
+ensureOrganizationCollections(database).catch((error: unknown) => {
+  console.error('Failed to ensure organization collections', error)
+})
+
 export const auth = betterAuth({
   secret,
   baseURL,
@@ -23,6 +28,7 @@ export const auth = betterAuth({
         enabled: false,
       },
     }),
+    organization(),
   ],
   emailAndPassword: {
     enabled: true,

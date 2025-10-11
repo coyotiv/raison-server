@@ -1,11 +1,11 @@
 import { createAuthClient } from 'better-auth/client'
-import { apiKeyClient } from 'better-auth/client/plugins'
+import { apiKeyClient, organizationClient } from 'better-auth/client/plugins'
 
 const baseURL = import.meta.env.VITE_BETTER_AUTH_URL ?? '/api/auth'
 
 export const authClient = createAuthClient({
   baseURL,
-  plugins: [apiKeyClient()],
+  plugins: [apiKeyClient(), organizationClient()],
 })
 
-export const { apiKey } = authClient
+export const { apiKey, organization } = authClient
