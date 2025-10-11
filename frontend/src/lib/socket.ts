@@ -26,8 +26,8 @@ function resolveSocketUrl(): string {
     return 'http://localhost:3000'
   }
 
-  // When running through Docker/Traefik - use socket.localhost subdomain
-  return 'http://socket.localhost'
+  // When running through Docker/Traefik - use api.localhost for both API and Socket.IO
+  return 'http://api.localhost'
 }
 
 function resolveSocketPath(): string {
