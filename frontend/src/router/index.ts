@@ -7,18 +7,18 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: HomeView, meta: { layout: 'default', requiresAuth: true } },
-    { path: '/login', component: LoginView, meta: { layout: 'auth' } },
+    // { path: '/login', component: LoginView, meta: { layout: 'auth' } },
   ],
 })
 
-router.beforeEach((to) => {
-  const auth = useAuthStore()
-  if (to.meta.requiresAuth && !auth.isLoggedIn) {
-    return { path: '/login', query: { redirect: to.fullPath } }
-  }
-  if (to.path === '/login' && auth.isLoggedIn) {
-    return { path: (to.query.redirect as string) || '/' }
-  }
-})
+// router.beforeEach((to) => {
+//   const auth = useAuthStore()
+//   if (to.meta.requiresAuth && !auth.isLoggedIn) {
+//     return { path: '/login', query: { redirect: to.fullPath } }
+//   }
+//   if (to.path === '/login' && auth.isLoggedIn) {
+//     return { path: (to.query.redirect as string) || '/' }
+//   }
+// })
 
 export default router

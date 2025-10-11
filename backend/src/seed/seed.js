@@ -16,6 +16,9 @@ async function seedFromFile(filePath) {
     throw new Error('Invalid seed JSON: missing "agents" array')
   }
 
+  await Prompt.deleteMany({})
+  await Agent.deleteMany({})
+
   for (const a of data.agents) {
     if (!a || !a.name) continue
 
