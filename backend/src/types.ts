@@ -1,5 +1,3 @@
-import type { Document as MongoDocument } from 'mongodb'
-
 export type AgentPayload = {
   _id: string
   name: string
@@ -8,11 +6,16 @@ export type AgentPayload = {
   [key: string]: unknown
 }
 
-export type AgentsChangeEvent = {
-  operationType: string
-  documentKey?: MongoDocument
-  fullDocument?: AgentPayload | null
-  updateDescription?: MongoDocument
+export type AgentChangedEvent = {
+  type: 'agent.changed'
+  at: string
+  agent: AgentPayload
+}
+
+export type AgentDeletedEvent = {
+  type: 'agent.deleted'
+  at: string
+  agentId: string
 }
 
 export type AgentsInitialEvent = {

@@ -11,7 +11,7 @@ import type { Server as SocketIOServer, Socket } from 'socket.io'
 import type { Types } from 'mongoose'
 import Agent, { AgentDocument } from './domains/agents/model'
 import Prompt from './domains/prompts/model'
-import type { AgentsChangeEvent, AgentsInitialEvent, AgentPayload } from './types'
+import type { AgentChangedEvent, AgentDeletedEvent, AgentsInitialEvent, AgentPayload } from './types'
 
 type GenericChangeStream = ChangeStream<MongoDocument>
 
@@ -54,8 +54,24 @@ async function fetchSerializedAgent(agentId: Types.ObjectId | string): Promise<A
   }
 }
 
-function emitAgentEvent(io: SocketIOServer, payload: AgentsChangeEvent): void {
-  io.emit('agents', payload)
+function emitAgentChangedEvent(io: SocketIOServer, agent: AgentPayload, clusterTime: Date): void {
+  const payload: AgentChangedEvent = {
+    type: 'agent.changed',
+    at: clusterTime.toISOString(),
+    agent,
+  }
+  io.emit('agent.changed', payload)
+  console.log(`${logPrefix} Emitted agent.changed for agent: ${agent._id}`)
+}
+
+function emitAgentDeletedEvent(io: SocketIOServer, agentId: string, clusterTime: Date): void {
+  const payload: AgentDeletedEvent = {
+    type: 'agent.deleted',
+    at: clusterTime.toISOString(),
+    agentId,
+  }
+  io.emit('agent.deleted', payload)
+  console.log(`${logPrefix} Emitted agent.deleted for agent: ${agentId}`)
 }
 
 function startAgentChangeStream(io: SocketIOServer): GenericChangeStream {
@@ -68,6 +84,16 @@ function startAgentChangeStream(io: SocketIOServer): GenericChangeStream {
   agentChangeStream.on('change', async (change: ChangeStreamDocument<MongoDocument>) => {
     console.log(`${logPrefix} Agent change detected:`, change.operationType)
 
+    // Handle delete operations
+    if (change.operationType === 'delete') {
+      if (hasDocumentKey(change) && '_id' in change.documentKey) {
+        const deletedId = change.documentKey._id.toString()
+        const clusterTime = change.clusterTime ? new Date(change.clusterTime.getHighBits() * 1000) : new Date()
+        emitAgentDeletedEvent(io, deletedId, clusterTime)
+      }
+      return
+    }
+
     let fullDocument: AgentPayload | null = null
 
     if (isInsertChange(change) && change.fullDocument) {
@@ -79,15 +105,14 @@ function startAgentChangeStream(io: SocketIOServer): GenericChangeStream {
       fullDocument = await fetchSerializedAgent(updatedId)
     }
 
-    const documentKey = hasDocumentKey(change) ? change.documentKey : undefined
-    const updateDescription = isUpdateChange(change) ? change.updateDescription : undefined
-
-    emitAgentEvent(io, {
-      operationType: change.operationType,
-      documentKey,
-      fullDocument,
-      updateDescription,
-    })
+    // Only emit if we have a valid agent document
+    if (fullDocument) {
+      // Use MongoDB's clusterTime for accurate timestamp
+      const clusterTime = change.clusterTime ? new Date(change.clusterTime.getHighBits() * 1000) : new Date()
+      emitAgentChangedEvent(io, fullDocument, clusterTime)
+    } else {
+      console.warn(`${logPrefix} No fullDocument available for ${change.operationType}`)
+    }
   })
 
   agentChangeStream.on('error', (error: unknown) => {
@@ -133,16 +158,9 @@ function startPromptChangeStream(io: SocketIOServer): GenericChangeStream {
       return
     }
 
-    emitAgentEvent(io, {
-      operationType: 'update',
-      documentKey: { _id: agentId },
-      fullDocument: serializedAgent,
-      updateDescription: {
-        updatedFields: { prompts: serializedAgent.prompts, systemPrompt: serializedAgent.systemPrompt },
-      },
-    })
-
-    console.log(`${logPrefix} Emitted agent update for prompt change: ${agentId}`)
+    // Use MongoDB's clusterTime for accurate timestamp
+    const clusterTime = change.clusterTime ? new Date(change.clusterTime.getHighBits() * 1000) : new Date()
+    emitAgentChangedEvent(io, serializedAgent, clusterTime)
   })
 
   promptChangeStream.on('error', (error: unknown) => {

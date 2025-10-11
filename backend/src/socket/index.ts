@@ -77,6 +77,10 @@ export async function broadcastAgents(): Promise<void> {
   }
 
   const agents = await Agent.find()
-  const payload = agents.map((agent: AgentDocument) => agent.toJSON())
-  ioInstance.emit('agents', payload)
+  const payload = {
+    type: 'agents.initial',
+    at: new Date().toISOString(),
+    agents: agents.map((agent: AgentDocument) => agent.toJSON()),
+  }
+  ioInstance.emit('agents.initial', payload)
 }
