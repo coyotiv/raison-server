@@ -1,5 +1,6 @@
 const { Server } = require('socket.io')
 const { initializeAgentChangeStream } = require('../change-streams')
+const Agent = require('../models/agent')
 
 let ioInstance
 
@@ -37,9 +38,27 @@ function initializeSocket(server, { app } = {}) {
     next()
   })
 
-  ioInstance.on('connection', (socket) => {
+  ioInstance.on('connection', async socket => {
     // eslint-disable-next-line no-console
     console.log(`[socket.io] Client connected: ${socket.id}`)
+
+    // Send all existing agents to the newly connected client in one event
+    try {
+      const agents = await Agent.find()
+      const agentObjects = agents.map(agent => agent.toJSON())
+
+      socket.emit('agents.initial', {
+        type: 'agents.initial',
+        at: new Date().toISOString(),
+        agents: agentObjects,
+      })
+
+      // eslint-disable-next-line no-console
+      console.log(`[socket.io] Sent ${agents.length} agents to client ${socket.id}`)
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`[socket.io] Error sending initial agents to client ${socket.id}:`, error)
+    }
 
     socket.on('disconnect', () => {
       // eslint-disable-next-line no-console
