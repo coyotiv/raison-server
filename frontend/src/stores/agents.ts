@@ -98,12 +98,12 @@ export const useAgentsStore = defineStore('agents', {
         this.agents.splice(index, 1)
       }
     },
-    async createAgent(name: string) {
+    async createAgent(payload: { name: string; prompts: { systemPrompt: string; version?: string }[] }) {
       this.error = null
       try {
         const response = await axios.post<AgentDocument>(
           resolveApiUrl('/agents'),
-          { name },
+          payload,
           { withCredentials: true }
         )
         if (response.data) {

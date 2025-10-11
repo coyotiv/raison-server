@@ -12,11 +12,20 @@ const {
 
 const router = express.Router()
 
+function formatZodError(error) {
+  const { formErrors, fieldErrors } = error.flatten()
+  const fieldMessages = Object.entries(fieldErrors || {}).flatMap(([field, messages]) =>
+    (messages || []).map((message) => `${field}: ${message}`)
+  )
+
+  return [...(formErrors || []), ...fieldMessages].join(', ')
+}
+
 router.get('/', async (req, res, next) => {
   try {
     const parsedQuery = agentListQuerySchema.safeParse(req.query)
     if (!parsedQuery.success) {
-      return res.status(400).json({ message: parsedQuery.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedQuery.error) })
     }
 
     const { version } = parsedQuery.data
@@ -40,12 +49,12 @@ router.get('/:id', async (req, res, next) => {
   try {
     const parsedParams = agentIdParamSchema.safeParse(req.params)
     if (!parsedParams.success) {
-      return res.status(400).json({ message: parsedParams.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedParams.error) })
     }
 
     const parsedQuery = agentListQuerySchema.safeParse(req.query)
     if (!parsedQuery.success) {
-      return res.status(400).json({ message: parsedQuery.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedQuery.error) })
     }
 
     const { id } = parsedParams.data
@@ -73,13 +82,37 @@ router.post('/', async (req, res, next) => {
   try {
     const parsedBody = agentCreateSchema.safeParse(req.body)
     if (!parsedBody.success) {
-      return res.status(400).json({ message: parsedBody.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedBody.error) })
     }
 
-    const agent = await Agent.create({ name: parsedBody.data.name })
-    const populatedAgent = await Agent.findById(agent._id)
+    const session = await mongoose.startSession()
+    session.startTransaction()
 
-    return res.status(201).json(populatedAgent)
+    try {
+      const [agent] = await Agent.create([{ name: parsedBody.data.name }], { session })
+
+      const promptsToCreate = parsedBody.data.prompts.map((prompt) => ({
+        agent: agent._id,
+        systemPrompt: prompt.systemPrompt,
+        ...(prompt.version ? { version: prompt.version } : {}),
+      }))
+
+      const createdPrompts = await Prompt.create(promptsToCreate, { session })
+      agent.prompts = createdPrompts.map((prompt) => prompt._id)
+
+      await agent.save({ session })
+
+      await session.commitTransaction()
+      session.endSession()
+
+      const populatedAgent = await Agent.findById(agent._id)
+
+      return res.status(201).json(populatedAgent)
+    } catch (error) {
+      await session.abortTransaction()
+      session.endSession()
+      throw error
+    }
   } catch (err) {
     next(err)
   }
@@ -89,25 +122,56 @@ router.put('/:id', async (req, res, next) => {
   try {
     const parsedParams = agentIdParamSchema.safeParse(req.params)
     if (!parsedParams.success) {
-      return res.status(400).json({ message: parsedParams.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedParams.error) })
     }
 
     const parsedBody = agentUpdateSchema.safeParse(req.body)
     if (!parsedBody.success) {
-      return res.status(400).json({ message: parsedBody.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedBody.error) })
     }
 
-    const agent = await Agent.findByIdAndUpdate(
-      parsedParams.data.id,
-      { name: parsedBody.data.name },
-      { new: true, runValidators: true }
-    )
+    const session = await mongoose.startSession()
+    session.startTransaction()
 
-    if (!agent) {
-      return res.sendStatus(404)
+    try {
+      const agent = await Agent.findById(parsedParams.data.id).session(session)
+
+      if (!agent) {
+        await session.abortTransaction()
+        session.endSession()
+        return res.sendStatus(404)
+      }
+
+      agent.name = parsedBody.data.name
+
+      if (parsedBody.data.prompts) {
+        await Prompt.deleteMany({ agent: agent._id }).session(session)
+
+        const createdPrompts = await Prompt.create(
+          parsedBody.data.prompts.map((prompt) => ({
+            agent: agent._id,
+            systemPrompt: prompt.systemPrompt,
+            ...(prompt.version ? { version: prompt.version } : {}),
+          })),
+          { session }
+        )
+
+        agent.prompts = createdPrompts.map((prompt) => prompt._id)
+      }
+
+      await agent.save({ session, validateModifiedOnly: true })
+
+      await session.commitTransaction()
+      session.endSession()
+
+      const populatedAgent = await Agent.findById(agent._id)
+
+      return res.json(populatedAgent)
+    } catch (error) {
+      await session.abortTransaction()
+      session.endSession()
+      throw error
     }
-
-    return res.json(agent)
   } catch (err) {
     next(err)
   }
@@ -117,12 +181,12 @@ router.post('/:id/prompts', async (req, res, next) => {
   try {
     const parsedParams = agentIdParamSchema.safeParse(req.params)
     if (!parsedParams.success) {
-      return res.status(400).json({ message: parsedParams.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedParams.error) })
     }
 
     const parsedBody = agentPromptCreateSchema.safeParse(req.body)
     if (!parsedBody.success) {
-      return res.status(400).json({ message: parsedBody.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedBody.error) })
     }
 
     const agent = await Agent.findById(parsedParams.data.id)
@@ -149,7 +213,7 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const parsedParams = agentIdParamSchema.safeParse(req.params)
     if (!parsedParams.success) {
-      return res.status(400).json({ message: parsedParams.error.flatten().formErrors.join(', ') })
+      return res.status(400).json({ message: formatZodError(parsedParams.error) })
     }
 
     const agent = await Agent.findById(parsedParams.data.id)

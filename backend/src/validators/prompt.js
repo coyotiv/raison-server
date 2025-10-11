@@ -1,12 +1,5 @@
 const { z } = require('zod')
-const mongoose = require('mongoose')
-
-const objectIdSchema = z
-  .string()
-  .trim()
-  .refine((value) => mongoose.Types.ObjectId.isValid(value), {
-    message: 'Invalid ObjectId',
-  })
+const { objectIdSchema, promptContentSchema } = require('./common')
 
 const promptListQuerySchema = z.object({
   agentId: objectIdSchema.optional(),
@@ -14,15 +7,11 @@ const promptListQuerySchema = z.object({
 
 const promptCreateSchema = z.object({
   agentId: objectIdSchema,
-  systemPrompt: z.string().trim().min(1, 'systemPrompt is required'),
-  version: z.string().trim().min(1).optional(),
+  ...promptContentSchema.shape,
 })
 
 const promptUpdateSchema = z
-  .object({
-    systemPrompt: z.string().trim().min(1, 'systemPrompt is required').optional(),
-    version: z.string().trim().min(1).optional(),
-  })
+  .object(promptContentSchema.partial().shape)
   .refine((data) => data.systemPrompt !== undefined || data.version !== undefined, {
     message: 'At least one field must be provided',
   })

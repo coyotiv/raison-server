@@ -8,7 +8,16 @@ const agentsStore = useAgentsStore()
 const agents = computed(() => agentsStore.agents)
 
 const newAgentName = ref('')
+const newAgentPrompts = ref<Array<{ systemPrompt: string; version: string }>>([
+  { systemPrompt: '', version: '' },
+])
+const newAgentError = ref('')
 const isCreatingAgent = ref(false)
+const isCreateAgentDisabled = computed(() => {
+  const hasName = newAgentName.value.trim().length > 0
+  const hasPromptWithContent = newAgentPrompts.value.some((prompt) => prompt.systemPrompt.trim().length > 0)
+  return isCreatingAgent.value || !hasName || !hasPromptWithContent
+})
 
 const editingAgentId = ref<string | null>(null)
 const editingAgentName = ref('')
@@ -51,16 +60,51 @@ onMounted(async () => {
 })
 
 async function handleCreateAgent() {
-  if (!newAgentName.value.trim()) {
+  const trimmedName = newAgentName.value.trim()
+  newAgentError.value = ''
+
+  if (!trimmedName) {
+    newAgentError.value = 'Agent name is required'
     return
   }
+
+  const preparedPrompts = newAgentPrompts.value
+    .map((prompt) => ({
+      systemPrompt: prompt.systemPrompt.trim(),
+      version: prompt.version.trim(),
+    }))
+    .filter((prompt) => prompt.systemPrompt.length > 0)
+    .map((prompt) => ({
+      systemPrompt: prompt.systemPrompt,
+      ...(prompt.version.length ? { version: prompt.version } : {}),
+    }))
+
+  if (!preparedPrompts.length) {
+    newAgentError.value = 'Please provide at least one prompt'
+    return
+  }
+
   isCreatingAgent.value = true
   try {
-    await agentsStore.createAgent(newAgentName.value.trim())
+    await agentsStore.createAgent({ name: trimmedName, prompts: preparedPrompts })
     newAgentName.value = ''
+    newAgentPrompts.value = [{ systemPrompt: '', version: '' }]
   } finally {
     isCreatingAgent.value = false
   }
+}
+
+function addNewAgentPromptField() {
+  newAgentPrompts.value.push({ systemPrompt: '', version: '' })
+}
+
+function removeNewAgentPromptField(index: number) {
+  if (newAgentPrompts.value.length === 1) {
+    newAgentPrompts.value.splice(0, 1, { systemPrompt: '', version: '' })
+    return
+  }
+
+  newAgentPrompts.value.splice(index, 1)
 }
 
 function startEditAgent(agent: AgentDocument) {
@@ -161,17 +205,60 @@ async function handleDeletePrompt(prompt: AgentPrompt) {
 
     <v-card class="mb-4">
       <v-card-text>
-        <v-form @submit.prevent="handleCreateAgent">
-          <div class="d-flex flex-wrap align-center ga-4">
-            <v-text-field
-              v-model="newAgentName"
-              label="New agent name"
+        <v-form @submit.prevent="handleCreateAgent" class="d-flex flex-column ga-4">
+          <v-text-field
+            v-model="newAgentName"
+            label="Agent name"
+            variant="outlined"
+            :disabled="isCreatingAgent"
+            :error="Boolean(newAgentError && !newAgentPrompts.length)"
+          />
+
+          <div class="d-flex align-center justify-space-between">
+            <div class="text-subtitle-2">Prompts</div>
+            <v-btn size="small" variant="text" @click.prevent="addNewAgentPromptField">Add another prompt</v-btn>
+          </div>
+
+          <div class="d-flex flex-column ga-4">
+            <v-card
+              v-for="(prompt, index) in newAgentPrompts"
+              :key="`new-agent-prompt-${index}`"
               variant="outlined"
-              :disabled="isCreatingAgent"
-              hide-details
-              class="flex-grow-1"
-            />
-            <v-btn color="primary" type="submit" :loading="isCreatingAgent" :disabled="!newAgentName.trim()">
+            >
+              <v-card-text class="d-flex flex-column ga-3">
+                <v-textarea
+                  v-model="prompt.systemPrompt"
+                  label="System prompt"
+                  variant="outlined"
+                  auto-grow
+                  :disabled="isCreatingAgent"
+                />
+                <div class="d-flex flex-wrap align-center ga-3">
+                  <v-text-field
+                    v-model="prompt.version"
+                    label="Version (optional)"
+                    variant="outlined"
+                    :disabled="isCreatingAgent"
+                    class="flex-grow-1"
+                  />
+                  <v-btn
+                    size="small"
+                    variant="text"
+                    color="error"
+                    :disabled="isCreatingAgent"
+                    @click.prevent="removeNewAgentPromptField(index)"
+                  >
+                    Remove
+                  </v-btn>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
+
+          <v-alert v-if="newAgentError" type="error" variant="tonal">{{ newAgentError }}</v-alert>
+
+          <div class="d-flex justify-end">
+            <v-btn color="primary" type="submit" :loading="isCreatingAgent" :disabled="isCreateAgentDisabled">
               Add Agent
             </v-btn>
           </div>
@@ -244,27 +331,51 @@ async function handleDeletePrompt(prompt: AgentPrompt) {
                 <v-divider class="mb-3" />
                 <div class="text-caption text-medium-emphasis mb-2">Prompt history</div>
                 <v-list class="bg-transparent pa-0" density="compact">
-                  <v-list-item v-for="prompt in agent.prompts" :key="prompt._id" class="px-0">
-                    <v-list-item-title class="text-body-2">
-                      {{ prompt.systemPrompt }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle>
-                      Version: {{ prompt.version }} · Updated {{ new Date(prompt.updatedAt).toLocaleString() }}
-                    </v-list-item-subtitle>
-                    <template #append>
-                      <div class="d-flex align-center ga-2">
-                        <v-btn size="small" variant="text" @click="openPromptDialog(agent, prompt)">Edit</v-btn>
-                        <v-btn
-                          size="small"
-                          color="error"
-                          variant="text"
-                          :loading="deletingPromptId === prompt._id"
-                          @click="handleDeletePrompt(prompt)"
-                        >
-                          Delete
-                        </v-btn>
+                  <v-list-item v-for="prompt in agent.prompts" :key="prompt._id" class="px-0 py-2 prompt-item">
+                    <div class="w-100">
+                      <div class="d-flex align-start justify-space-between">
+                        <div class="mr-4">
+                          <v-list-item-title class="text-body-2">
+                            {{ prompt.systemPrompt }}
+                          </v-list-item-title>
+                          <v-list-item-subtitle class="text-caption text-medium-emphasis">
+                            Version: {{ prompt.version }} · Updated {{ new Date(prompt.updatedAt).toLocaleString() }}
+                          </v-list-item-subtitle>
+                        </div>
+                        <div class="d-flex align-center ga-1">
+                          <v-tooltip text="Edit prompt" location="bottom">
+                            <template #activator="{ props }">
+                              <v-btn
+                                v-bind="props"
+                                size="small"
+                                variant="text"
+                                density="comfortable"
+                                class="ma-0"
+                                @click.stop="openPromptDialog(agent, prompt)"
+                              >
+                                Edit
+                              </v-btn>
+                            </template>
+                          </v-tooltip>
+                          <v-tooltip text="Delete prompt" location="bottom">
+                            <template #activator="{ props }">
+                              <v-btn
+                                v-bind="props"
+                                size="small"
+                                color="error"
+                                variant="text"
+                                density="comfortable"
+                                class="ma-0"
+                                :loading="deletingPromptId === prompt._id"
+                                @click.stop="handleDeletePrompt(prompt)"
+                              >
+                                Delete
+                              </v-btn>
+                            </template>
+                          </v-tooltip>
+                        </div>
                       </div>
-                    </template>
+                    </div>
                   </v-list-item>
                 </v-list>
               </div>
