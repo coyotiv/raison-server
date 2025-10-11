@@ -1,23 +1,16 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import axios from 'axios'
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import AuthLayout from '@/layouts/AuthLayout.vue'
 
-onMounted(async () => {
-  try {
-    const res = await axios.get('/api/users')
-    console.log(res.data)
-  } catch (err) {
-    console.error('Failed to fetch /users:', err)
-  }
-})
+const route = useRoute()
+const layouts = { default: DefaultLayout, auth: AuthLayout }
+const layout = computed(() => layouts[(route.meta.layout as 'auth' | 'default') || 'default'])
 </script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <component :is="layout">
+    <RouterView />
+  </component>
 </template>
-
-<style scoped></style>
