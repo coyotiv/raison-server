@@ -1,41 +1,32 @@
-import http from 'http'
+import 'dotenv/config'
+
+import http from 'node:http'
 import debugModule from 'debug'
+import mongoose from 'mongoose'
+
 import app from './app'
-import { initializeSocket } from './lib/socket'
-import connection from './lib/database-connection'
+import { connectToDatabase } from './lib/database-connection'
+// import { initializeSocket } from './lib/socket'
 import { seedFromFile } from './lib/seed'
+import config from './config'
+
+connectToDatabase()
 
 const debug = debugModule('backend:server')
 
-function normalizePort(val: string): number | string | false {
-  const port = parseInt(val, 10)
-
-  if (Number.isNaN(port)) {
-    return val
-  }
-
-  if (port >= 0) {
-    return port
-  }
-
-  return false
-}
-
-const port = normalizePort(process.env.PORT || '3000')
-if (typeof port === 'number' || typeof port === 'string') {
-  app.set('port', port)
-}
+const port = config.PORT
+app.set('port', config.PORT)
 
 const server = http.createServer(app)
-initializeSocket(server, { app })
+// initializeSocket(server, { app })
 
 function getSeedFileFromArgs(): string | undefined {
   const args = process.argv.slice(2)
   const envFile = process.env.SEED_FILE
   let cliFile: string | undefined
-  const idx = args.findIndex((a) => a === '--seedFile' || a === '--seed-file')
+  const idx = args.findIndex(a => a === '--seedFile' || a === '--seed-file')
   if (idx !== -1 && args[idx + 1]) cliFile = args[idx + 1]
-  const eq = args.find((a) => a.startsWith('--seedFile=') || a.startsWith('--seed-file='))
+  const eq = args.find(a => a.startsWith('--seedFile=') || a.startsWith('--seed-file='))
   if (!cliFile && eq) cliFile = eq.split('=')[1]
   return cliFile || envFile
 }
@@ -44,9 +35,9 @@ async function start(): Promise<void> {
   const seedFile = getSeedFileFromArgs()
   if (seedFile) {
     try {
-      if (connection.readyState !== 1) {
-        await new Promise<void>((resolve) => {
-          connection.once('open', resolve)
+      if (mongoose.connection.readyState !== 1) {
+        await new Promise<void>(resolve => {
+          mongoose.connection.once('open', resolve)
         })
       }
       await seedFromFile(seedFile)
@@ -57,7 +48,7 @@ async function start(): Promise<void> {
     }
   }
 
-  server.listen(port)
+  server.listen(config.PORT)
   server.on('error', onError)
   server.on('listening', onListening)
 }
@@ -93,7 +84,7 @@ function onListening(): void {
   debug(`Listening on ${bind}`)
 }
 
-start().catch((error) => {
+start().catch(error => {
   console.error('[server] Failed to start:', error)
   process.exit(1)
 })

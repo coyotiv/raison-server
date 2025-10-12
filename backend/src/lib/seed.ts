@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
-import { readFile } from 'fs/promises'
-import path from 'path'
-import Agent, { AgentDocument } from '@/domains/agents/model'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
+
+import Agent, { type AgentDocument } from '@/domains/agents/model'
 import Prompt from '@/domains/prompts/model'
 
 type SeedPrompt = {

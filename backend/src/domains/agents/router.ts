@@ -1,195 +1,119 @@
-import { Router, Request, Response, NextFunction } from 'express'
-import type { AgentDocument } from './model'
+import { validate } from 'echt'
+import { Router } from 'express'
+
 import {
-  agentCreateSchema,
-  agentUpdateSchema,
-  agentIdParamSchema,
-  agentListQuerySchema,
-  agentPromptCreateSchema,
-  AgentCreateInput,
-  AgentUpdateInput,
-  AgentIdParams,
-  AgentListQuery,
-  AgentPromptCreateInput,
+  listAgentsRequest,
+  getAgentRequest,
+  createAgentRequest,
+  updateAgentRequest,
+  deleteAgentRequest,
+  addPromptToAgentRequest,
 } from './validators'
-import {
-  listAgents,
-  findAgentById,
-  createAgent,
-  updateAgent,
-  appendAgentPrompt,
-  deleteAgent,
-} from './service'
-import { formatZodError } from '@/lib/error-handler'
-import { ErrorResponse } from '@/types'
+import { listAgents, findAgentById, createAgent, updateAgent, appendAgentPrompt, deleteAgent } from './service'
 
 const agentsRouter = Router()
 
 agentsRouter.get(
   '/',
-  async (
-    req: Request<Record<string, never>, AgentDocument[] | ErrorResponse, unknown, AgentListQuery>,
-    res: Response<AgentDocument[] | ErrorResponse>,
-    next: NextFunction
-  ) => {
+  validate(listAgentsRequest).use(async (req, res, next) => {
     try {
-      const parsedQuery = agentListQuerySchema.safeParse(req.query)
-      if (!parsedQuery.success) {
-        return res.status(400).json({ message: formatZodError(parsedQuery.error) })
-      }
+      const agents = await listAgents(req.query.tag)
 
-      const agents = await listAgents(parsedQuery.data.tag)
-      return res.json(agents as AgentDocument[])
+      res.json(agents)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 agentsRouter.get(
   '/:id',
-  async (
-    req: Request<AgentIdParams, AgentDocument | ErrorResponse, unknown, AgentListQuery>,
-    res: Response<AgentDocument | ErrorResponse>,
-    next: NextFunction
-  ) => {
+  validate(getAgentRequest).use(async (req, res, next) => {
     try {
-      const parsedParams = agentIdParamSchema.safeParse(req.params)
-      if (!parsedParams.success) {
-        return res.status(400).json({ message: formatZodError(parsedParams.error) })
-      }
+      const agent = await findAgentById(req.params.id, req.query.tag)
 
-      const parsedQuery = agentListQuerySchema.safeParse(req.query)
-      if (!parsedQuery.success) {
-        return res.status(400).json({ message: formatZodError(parsedQuery.error) })
-      }
-
-      const agent = await findAgentById(parsedParams.data.id, parsedQuery.data.tag)
       if (!agent) {
-        return res.sendStatus(404)
+        res.status(404).json({ message: 'Agent not found' })
+        return
       }
 
-      return res.json(agent as AgentDocument)
+      res.json(agent)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 agentsRouter.post(
   '/',
-  async (
-    req: Request<Record<string, never>, AgentDocument | ErrorResponse, AgentCreateInput>,
-    res: Response<AgentDocument | ErrorResponse>,
-    next: NextFunction
-  ) => {
+  validate(createAgentRequest).use(async (req, res, next) => {
     try {
-      const parsedBody = agentCreateSchema.safeParse(req.body)
-      if (!parsedBody.success) {
-        return res.status(400).json({ message: formatZodError(parsedBody.error) })
+      const agent = await createAgent(req.body)
+
+      if (!agent) {
+        res.status(500).json({ message: 'Failed to create agent' })
+        return
       }
 
-      const agent = await createAgent(parsedBody.data)
-
-      return res.status(201).json(agent as AgentDocument)
+      res.status(201).json(agent)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 agentsRouter.put(
   '/:id',
-  async (
-    req: Request<AgentIdParams, AgentDocument | ErrorResponse, AgentUpdateInput>,
-    res: Response<AgentDocument | ErrorResponse>,
-    next: NextFunction
-  ) => {
+  validate(updateAgentRequest).use(async (req, res, next) => {
     try {
-      const parsedParams = agentIdParamSchema.safeParse(req.params)
-      if (!parsedParams.success) {
-        return res.status(400).json({ message: formatZodError(parsedParams.error) })
-      }
-
-      const parsedBody = agentUpdateSchema.safeParse(req.body)
-      if (!parsedBody.success) {
-        return res.status(400).json({ message: formatZodError(parsedBody.error) })
-      }
-
-      const agent = await updateAgent(parsedParams.data.id, parsedBody.data)
+      const agent = await updateAgent(req.params.id, req.body)
 
       if (!agent) {
-        return res.sendStatus(404)
+        res.status(404).json({ message: 'Agent not found' })
+        return
       }
 
-      return res.json(agent as AgentDocument)
+      res.json(agent)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 agentsRouter.post(
   '/:id/prompts',
-  async (
-    req: Request<AgentIdParams, AgentDocument | ErrorResponse, AgentPromptCreateInput>,
-    res: Response<AgentDocument | ErrorResponse>,
-    next: NextFunction
-  ) => {
+  validate(addPromptToAgentRequest).use(async (req, res, next) => {
     try {
-      const parsedParams = agentIdParamSchema.safeParse(req.params)
-      if (!parsedParams.success) {
-        return res.status(400).json({ message: formatZodError(parsedParams.error) })
-      }
-
-      const parsedBody = agentPromptCreateSchema.safeParse(req.body)
-      if (!parsedBody.success) {
-        return res.status(400).json({ message: formatZodError(parsedBody.error) })
-      }
-
-      const agent = await appendAgentPrompt(parsedParams.data.id, parsedBody.data)
+      const agent = await appendAgentPrompt(req.params.id, req.body)
 
       if (!agent) {
-        return res.sendStatus(404)
+        res.status(404).json({ message: 'Agent not found' })
+        return
       }
 
-      return res.status(201).json(agent as AgentDocument)
+      res.json(agent)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 agentsRouter.delete(
   '/:id',
-  async (
-    req: Request<AgentIdParams, void | ErrorResponse>,
-    res: Response<void | ErrorResponse>,
-    next: NextFunction
-  ) => {
+  validate(deleteAgentRequest).use(async (req, res, next) => {
     try {
-      const parsedParams = agentIdParamSchema.safeParse(req.params)
-      if (!parsedParams.success) {
-        return res.status(400).json({ message: formatZodError(parsedParams.error) })
-      }
-
-      const deleted = await deleteAgent(parsedParams.data.id)
+      const deleted = await deleteAgent(req.params.id)
 
       if (!deleted) {
-        return res.sendStatus(404)
+        res.status(404).json({ message: 'Agent not found' })
+        return
       }
 
-      return res.sendStatus(204)
+      res.status(204).json(null)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 export default agentsRouter

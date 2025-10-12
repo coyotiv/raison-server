@@ -1,10 +1,15 @@
-import type { Server as HTTPServer } from 'http'
-import type { Application } from 'express'
-import { Server, Socket } from 'socket.io'
-import { initializeChangeStreams, handleSocketConnection } from './change-streams'
-import type { SocketAuth } from '@/types'
-import { auth } from '@/domains/auth/config'
 import { fromNodeHeaders } from 'better-auth/node'
+import type { Application } from 'express'
+import type { Server as HTTPServer } from 'node:http'
+
+import { Server, type Socket } from 'socket.io'
+
+import config from '@/config'
+import { auth } from '@/domains/auth/config'
+import type { SocketAuth } from '@/types'
+
+import { initializeChangeStreams, handleSocketConnection } from './change-streams'
+
 
 let ioInstance: Server | null = null
 
@@ -17,9 +22,7 @@ export function initializeSocket(server: HTTPServer, { app }: InitializeSocketOp
     return ioInstance
   }
 
-  const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
-    : ['http://localhost', 'http://localhost:5173']
+  const allowedOrigins = config.CORS_ORIGINS
 
   ioInstance = new Server(server, {
     path: '/socket.io',

@@ -1,9 +1,9 @@
-import type { Request, Response, NextFunction } from 'express'
 import { toNodeHandler } from 'better-auth/node'
-import express from 'express'
+import express, { type RequestHandler } from 'express'
+
 import { getSession, getAuthHandler } from './service'
 
-export async function getSessionHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
+export const getSessionHandler: RequestHandler = async (req, res, next) => {
   try {
     const session = await getSession(req.headers)
 

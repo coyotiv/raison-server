@@ -1,5 +1,4 @@
-import { Schema, model, HydratedDocument, Model, InferSchemaType } from 'mongoose'
-import autopopulate from 'mongoose-autopopulate'
+import { Schema, model, type HydratedDocument, type Model, type InferSchemaType } from 'mongoose'
 import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
 
 const promptSchema = new Schema(
@@ -14,8 +13,6 @@ const promptSchema = new Schema(
   },
   { timestamps: true }
 )
-
-promptSchema.plugin(autopopulate)
 
 export type Prompt = InferSchemaType<typeof promptSchema>
 export type PromptDocument = HydratedDocument<Prompt>

@@ -1,7 +1,9 @@
-import { Schema, model, HydratedDocument, Model, InferSchemaType, Types } from 'mongoose'
+import { Schema, model, type HydratedDocument, type Model, type InferSchemaType, Types } from 'mongoose'
 import autopopulate from 'mongoose-autopopulate'
-import type { PromptDocument } from '@/domains/prompts/model'
+
+import type { Prompt, PromptDocument } from '@/domains/prompts/model'
 import { DEFAULT_PROMPT_TAG } from '@/lib/tags'
+
 
 const agentSchema = new Schema(
   {
@@ -48,6 +50,12 @@ agentSchema.set('toObject', { virtuals: true })
 agentSchema.plugin(autopopulate)
 
 export type Agent = InferSchemaType<typeof agentSchema>
+export type PopulatedAgent = Omit<Agent, 'prompts'> & {
+  _id: Types.ObjectId | string
+  prompts: Prompt[]
+  createdAt: Date
+  updatedAt: Date
+}
 export type AgentDocument = HydratedDocument<Agent>
 export type AgentModel = Model<Agent>
 

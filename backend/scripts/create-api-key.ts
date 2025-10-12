@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { connection } from '../src/lib/database-connection'
+import connection from '../src/lib/database-connection'
 import { auth } from '../src/domains/auth/config'
 import User from '../src/domains/users/model'
 
@@ -40,7 +40,7 @@ async function main(): Promise<void> {
   await connection.close()
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error(error)
   process.exit(1)
 })

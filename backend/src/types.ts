@@ -1,9 +1,14 @@
+import type { Types } from 'mongoose'
+
+import type { Prompt } from './domains/prompts/model'
+
+type ID = Types.ObjectId | string
+
 export type AgentPayload = {
-  _id: string
+  _id: ID
   name: string
-  prompts?: unknown
-  systemPrompt?: unknown
-  [key: string]: unknown
+  prompts?: Prompt[]
+  systemPrompt?: Prompt
 }
 
 export type AgentChangedEvent = {
@@ -15,7 +20,7 @@ export type AgentChangedEvent = {
 export type AgentDeletedEvent = {
   type: 'agent.deleted'
   at: string
-  agentId: string
+  agentId: ID
 }
 
 export type AgentsInitialEvent = {
@@ -25,11 +30,10 @@ export type AgentsInitialEvent = {
 }
 
 export type PromptPayload = {
-  _id: string
-  agent: string
+  _id: ID
+  agent: ID
   systemPrompt: string
   tags: string[]
-  [key: string]: unknown
 }
 
 export type PromptsInitialEvent = {
@@ -39,9 +43,8 @@ export type PromptsInitialEvent = {
 }
 
 export type UserPayload = {
-  _id: string
+  _id: ID
   name: string
-  [key: string]: unknown
 }
 
 export type UsersInitialEvent = {

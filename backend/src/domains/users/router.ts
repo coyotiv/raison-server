@@ -1,126 +1,88 @@
-import { Router, Request, Response, NextFunction } from 'express'
-import {
-  userCreateSchema,
-  userUpdateSchema,
-  userIdParamSchema,
-  UserCreateInput,
-  UserUpdateInput,
-  UserIdParams,
-} from './validators'
-import {
-  listUsers,
-  findUserById,
-  createUser,
-  updateUser,
-  deleteUser,
-} from './service'
-import { formatZodError } from '@/lib/error-handler'
+import { validate } from 'echt'
+import { Router } from 'express'
+
+import { listUsers, findUserById, createUser, updateUser, deleteUser } from './service'
+import { listUsersRequest, getUserRequest, deleteUserRequest, updateUserRequest, createUserRequest } from './validators'
 
 const usersRouter = Router()
 
-usersRouter.get('/', async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const users = await listUsers()
-    res.json(users)
-  } catch (error) {
-    next(error)
-  }
-})
+usersRouter.get(
+  '/',
+  validate(listUsersRequest).use(async (_req, res, next) => {
+    try {
+      const users = await listUsers()
+      res.json(users)
+    } catch (error) {
+      next(error)
+    }
+  })
+)
 
 usersRouter.get(
   '/:id',
-  async (req: Request<UserIdParams>, res: Response, next: NextFunction): Promise<Response | undefined> => {
+  validate(getUserRequest).use(async (req, res, next) => {
     try {
-      const parsedParams = userIdParamSchema.safeParse(req.params)
-      if (!parsedParams.success) {
-        return res.status(400).json({ message: formatZodError(parsedParams.error) })
-      }
-
-      const user = await findUserById(parsedParams.data.id)
+      const user = await findUserById(req.params.id)
 
       if (!user) {
-        return res.sendStatus(404)
+        res.status(404).json({ message: 'User not found' })
+        return
       }
 
-      return res.json(user)
+      res.json(user)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 usersRouter.post(
   '/',
-  async (req: Request<Record<string, never>, unknown, UserCreateInput>, res: Response, next: NextFunction) => {
+  validate(createUserRequest).use(async (req, res, next) => {
     try {
-      const parsedBody = userCreateSchema.safeParse(req.body)
-      if (!parsedBody.success) {
-        return res.status(400).json({ message: formatZodError(parsedBody.error) })
-      }
+      const user = await createUser(req.body)
 
-      const user = await createUser(parsedBody.data)
-      return res.status(201).json(user)
+      res.status(201).json(user)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 usersRouter.put(
   '/:id',
-  async (
-    req: Request<UserIdParams, unknown, UserUpdateInput>,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | undefined> => {
+  validate(updateUserRequest).use(async (req, res, next) => {
     try {
-      const parsedParams = userIdParamSchema.safeParse(req.params)
-      if (!parsedParams.success) {
-        return res.status(400).json({ message: formatZodError(parsedParams.error) })
-      }
-
-      const parsedBody = userUpdateSchema.safeParse(req.body)
-      if (!parsedBody.success) {
-        return res.status(400).json({ message: formatZodError(parsedBody.error) })
-      }
-
-      const user = await updateUser(parsedParams.data.id, parsedBody.data)
+      const user = await updateUser(req.params.id, req.body)
 
       if (!user) {
-        return res.sendStatus(404)
+        res.status(404).json({ message: 'User not found' })
+        return
       }
 
-      return res.json(user)
+      res.json(user)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 usersRouter.delete(
   '/:id',
-  async (req: Request<UserIdParams>, res: Response, next: NextFunction): Promise<Response | undefined> => {
+  validate(deleteUserRequest).use(async (req, res, next) => {
     try {
-      const parsedParams = userIdParamSchema.safeParse(req.params)
-      if (!parsedParams.success) {
-        return res.status(400).json({ message: parsedParams.error.flatten().formErrors.join(', ') })
-      }
-
-      const deleted = await deleteUser(parsedParams.data.id)
+      const deleted = await deleteUser(req.params.id)
 
       if (!deleted) {
-        return res.sendStatus(404)
+        res.status(404).json({ message: 'User not found' })
+        return
       }
 
-      return res.sendStatus(204)
+      res.status(204).json(null)
     } catch (error) {
       next(error)
-      return undefined
     }
-  }
+  })
 )
 
 export default usersRouter

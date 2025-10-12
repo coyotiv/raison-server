@@ -1,5 +1,4 @@
-import { Schema, model, HydratedDocument, Model, InferSchemaType } from 'mongoose'
-import autopopulate from 'mongoose-autopopulate'
+import { Schema, model, type HydratedDocument, type Model, type InferSchemaType } from 'mongoose'
 
 const userSchema = new Schema(
   {
@@ -12,8 +11,6 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 )
-
-userSchema.plugin(autopopulate)
 
 export type User = InferSchemaType<typeof userSchema>
 export type UserDocument = HydratedDocument<User>

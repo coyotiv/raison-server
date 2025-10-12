@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { objectIdSchema, tagItemSchema } from '@/domains/shared/validators'
 import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
+import { dateSchema, errorSchema, tagItemSchema, objectIdSchema } from '@/domains/shared/validators/common'
 
 export const promptListQuerySchema = z.object({
   agentId: objectIdSchema.optional(),
@@ -14,6 +14,15 @@ export const promptCreateSchema = z.object({
     .nonempty('At least one tag is required')
     .default([DEFAULT_PROMPT_TAG])
     .transform((tags) => normalizeTags(tags)),
+})
+
+const promptSchema = z.object({
+  _id: objectIdSchema,
+  agent: objectIdSchema,
+  systemPrompt: z.string().trim(),
+  tags: z.array(tagItemSchema),
+  createdAt: dateSchema,
+  updatedAt: dateSchema,
 })
 
 export const promptUpdateSchema = z
@@ -31,6 +40,56 @@ export const promptUpdateSchema = z
 export const promptIdParamSchema = z.object({
   id: objectIdSchema,
 })
+
+export const listPromptsRequest = {
+  query: promptListQuerySchema,
+  useResponse: {
+    200: z.array(promptSchema),
+    400: errorSchema,
+    500: errorSchema,
+  },
+}
+
+export const getPromptRequest = {
+  params: promptIdParamSchema,
+  useResponse: {
+    200: promptSchema,
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+}
+
+export const createPromptRequest = {
+  body: promptCreateSchema,
+  useResponse: {
+    201: promptSchema,
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+}
+
+export const updatePromptRequest = {
+  params: promptIdParamSchema,
+  body: promptUpdateSchema,
+  useResponse: {
+    200: promptSchema,
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+}
+
+export const deletePromptRequest = {
+  params: promptIdParamSchema,
+  useResponse: {
+    204: z.null(),
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+}
 
 export type PromptListQuery = z.infer<typeof promptListQuerySchema>
 export type PromptCreateInput = z.infer<typeof promptCreateSchema>

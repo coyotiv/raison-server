@@ -10,7 +10,7 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node"],
+    "types": ["node", "jest"],
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"]
@@ -21,6 +21,6 @@
     "resolveFullExtension": ".js"
   },
   "typeRoots": ["./types", "./node_modules/@types"],
-  "include": ["bin/**/*.ts", "src/**/*.ts", "types/**/*.d.ts", "bin/www"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.ts", "types/**/*.d.ts", "bin/www"],
+  "exclude": ["node_modules", "dist", "coverage", "__tests__"]
 }

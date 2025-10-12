@@ -1,27 +1,17 @@
 import type { Socket } from 'socket.io'
+
+import { formatZodError } from '@/lib/error-handler'
 import type { AgentsInitialEvent } from '@/types'
+
 import {
   agentCreateSchema,
   agentUpdateSchema,
   agentIdParamSchema,
-  agentListQuerySchema,
   agentPromptCreateSchema,
+  agentTagsQuerySchema,
 } from './validators'
-import {
-  listAgents,
-  findAgentById,
-  createAgent,
-  updateAgent,
-  appendAgentPrompt,
-  deleteAgent,
-} from './service'
-import {
-  respondWithError,
-  respondWithSuccess,
-  formatUnknownError,
-} from '@/domains/shared/socket'
-import { toAgentPayload } from '@/domains/shared/serialization'
-import { formatZodError } from '@/lib/error-handler'
+import { listAgents, findAgentById, createAgent, updateAgent, appendAgentPrompt, deleteAgent } from './service'
+import { respondWithError, respondWithSuccess, formatUnknownError } from '../shared/socket'
 
 function registerAgentSocketHandlers(socket: Socket): void {
   async function emitInitialAgents(): Promise<void> {
@@ -29,27 +19,27 @@ function registerAgentSocketHandlers(socket: Socket): void {
     const payload: AgentsInitialEvent = {
       type: 'agents.initial',
       at: new Date().toISOString(),
-      agents: agents.map(toAgentPayload),
+      agents,
     }
 
     socket.emit('agents.initial', payload)
   }
 
-  emitInitialAgents().catch((error) => {
+  emitInitialAgents().catch(error => {
     const message = formatUnknownError(error, 'Failed to send initial agents')
     console.error(message)
   })
 
   socket.on('agents:list', async (payload, callback) => {
     try {
-      const parsedQuery = agentListQuerySchema.safeParse(payload ?? {})
+      const parsedQuery = agentTagsQuerySchema.safeParse(payload ?? {})
       if (!parsedQuery.success) {
         respondWithError(callback, formatZodError(parsedQuery.error))
         return
       }
 
       const agents = await listAgents(parsedQuery.data.tag)
-      respondWithSuccess(callback, agents.map(toAgentPayload))
+      respondWithSuccess(callback, agents)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to list agents'))
     }
@@ -63,7 +53,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
         return
       }
 
-      const parsedQuery = agentListQuerySchema.safeParse(payload ? { tag: payload.tag } : {})
+      const parsedQuery = agentTagsQuerySchema.safeParse(payload ? { tag: payload.tag } : {})
       if (!parsedQuery.success) {
         respondWithError(callback, formatZodError(parsedQuery.error))
         return
@@ -76,7 +66,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, toAgentPayload(agent))
+      respondWithSuccess(callback, agent)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to fetch agent'))
     }
@@ -91,7 +81,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
       }
 
       const agent = await createAgent(parsedBody.data)
-      respondWithSuccess(callback, toAgentPayload(agent))
+      respondWithSuccess(callback, agent)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to create agent'))
     }
@@ -118,7 +108,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, toAgentPayload(agent))
+      respondWithSuccess(callback, agent)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to update agent'))
     }
@@ -145,7 +135,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, toAgentPayload(agent))
+      respondWithSuccess(callback, agent)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to add agent prompt'))
     }
