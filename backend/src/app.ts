@@ -8,7 +8,6 @@ import logger from 'morgan'
 import config from './config'
 import agentsRouter from './domains/agents/router'
 import { auth } from './domains/auth/config'
-import usersRouter from './domains/users/router'
 import promptsRouter from './domains/prompts/router'
 import { errorHandler } from './lib/error-handler'
 
@@ -37,7 +36,6 @@ app.get('/ping', (_req, res) => {
   res.sendStatus(200)
 })
 
-app.use('/users', usersRouter)
 app.use('/agents', agentsRouter)
 app.use('/prompts', promptsRouter)
 

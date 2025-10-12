@@ -15,7 +15,6 @@ import Prompt from '@/domains/prompts/model'
 import { findAgentById, toAgentPayload } from '@/domains/agents/service'
 import registerAgentSocketHandlers from '@/domains/agents/socket-handlers'
 import registerPromptSocketHandlers from '@/domains/prompts/socket-handlers'
-import registerUserSocketHandlers from '@/domains/users/socket-handlers'
 import type { AgentChangedEvent, AgentDeletedEvent, AgentPayload } from '@/types'
 
 type GenericChangeStream = ChangeStream<MongoDocument>
@@ -101,8 +100,11 @@ function startAgentChangeStream(io: SocketIOServer): GenericChangeStream {
 
     if (!payload && isUpdateChange(change) && change.documentKey && '_id' in change.documentKey) {
       const updatedId = change.documentKey._id as Types.ObjectId | string
-      const deletedAt = (change.updateDescription?.updatedFields?.deletedAt as Date | undefined) ??
-        (change.fullDocument && 'deletedAt' in change.fullDocument ? (change.fullDocument as { deletedAt?: Date | null }).deletedAt ?? undefined : undefined)
+      const deletedAt =
+        (change.updateDescription?.updatedFields?.deletedAt as Date | undefined) ??
+        (change.fullDocument && 'deletedAt' in change.fullDocument
+          ? (change.fullDocument as { deletedAt?: Date | null }).deletedAt ?? undefined
+          : undefined)
 
       const clusterTime = change.clusterTime ? new Date(change.clusterTime.getHighBits() * 1000) : new Date()
 
@@ -238,7 +240,6 @@ export async function handleSocketConnection(socket: Socket): Promise<void> {
   try {
     registerAgentSocketHandlers(socket)
     registerPromptSocketHandlers(socket)
-    registerUserSocketHandlers(socket)
   } catch (error) {
     console.error(`[socket.io] Error registering socket handlers for client ${socket.id}:`, error)
   }
