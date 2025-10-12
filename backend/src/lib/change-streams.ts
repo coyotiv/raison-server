@@ -12,6 +12,7 @@ import type { Server as SocketIOServer, Socket } from 'socket.io'
 
 import Agent, { type PopulatedAgent } from '@/domains/agents/model'
 import Prompt from '@/domains/prompts/model'
+import { findAgentById, toAgentPayload } from '@/domains/agents/service'
 import registerAgentSocketHandlers from '@/domains/agents/socket-handlers'
 import registerPromptSocketHandlers from '@/domains/prompts/socket-handlers'
 import registerUserSocketHandlers from '@/domains/users/socket-handlers'
@@ -40,8 +41,11 @@ const logPrefix = '[change-stream]'
 
 async function fetchSerializedAgent(agentId: Types.ObjectId | string): Promise<AgentPayload | null> {
   try {
-    const agent = (await Agent.findById(agentId).lean()) as PopulatedAgent | null
-    return agent
+    const agent = await findAgentById(agentId.toString())
+    if (!agent) {
+      return null
+    }
+    return toAgentPayload(agent)
   } catch (error) {
     console.error(`${logPrefix} Error fetching agent:`, error)
     return null
@@ -88,22 +92,39 @@ function startAgentChangeStream(io: SocketIOServer): GenericChangeStream {
       return
     }
 
-    let fullDocument: AgentPayload | null = null
+    let payload: AgentPayload | null = null
 
-    if (isInsertChange(change) && change.fullDocument) {
-      fullDocument = Agent.hydrate(change.fullDocument) as unknown as PopulatedAgent
+    if (isInsertChange(change) && change.documentKey && '_id' in change.documentKey) {
+      const insertedId = change.documentKey._id as Types.ObjectId | string
+      payload = await fetchSerializedAgent(insertedId)
     }
 
-    if (isUpdateChange(change) && change.documentKey && '_id' in change.documentKey) {
+    if (!payload && isUpdateChange(change) && change.documentKey && '_id' in change.documentKey) {
       const updatedId = change.documentKey._id as Types.ObjectId | string
-      fullDocument = await fetchSerializedAgent(updatedId)
+      const deletedAt = (change.updateDescription?.updatedFields?.deletedAt as Date | undefined) ??
+        (change.fullDocument && 'deletedAt' in change.fullDocument ? (change.fullDocument as { deletedAt?: Date | null }).deletedAt ?? undefined : undefined)
+
+      const clusterTime = change.clusterTime ? new Date(change.clusterTime.getHighBits() * 1000) : new Date()
+
+      if (deletedAt) {
+        emitAgentDeletedEvent(io, updatedId.toString(), clusterTime)
+        return
+      }
+
+      payload = await fetchSerializedAgent(updatedId)
+
+      if (!payload) {
+        console.warn(`${logPrefix} No agent payload available for update ${updatedId}`)
+        return
+      }
+
+      emitAgentChangedEvent(io, payload, clusterTime)
+      return
     }
 
-    // Only emit if we have a valid agent document
-    if (fullDocument) {
-      // Use MongoDB's clusterTime for accurate timestamp
+    if (payload) {
       const clusterTime = change.clusterTime ? new Date(change.clusterTime.getHighBits() * 1000) : new Date()
-      emitAgentChangedEvent(io, fullDocument, clusterTime)
+      emitAgentChangedEvent(io, payload, clusterTime)
     } else {
       console.warn(`${logPrefix} No fullDocument available for ${change.operationType}`)
     }

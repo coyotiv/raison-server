@@ -8,7 +8,7 @@ export type AgentPayload = {
   _id: ID
   name: string
   prompts?: Prompt[]
-  systemPrompt?: Prompt
+  systemPrompt?: string | null
 }
 
 export type AgentChangedEvent = {

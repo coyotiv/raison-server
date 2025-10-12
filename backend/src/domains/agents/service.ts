@@ -2,26 +2,34 @@ import mongoose, { type ClientSession } from 'mongoose'
 
 import Prompt from '@/domains/prompts/model'
 import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
-import Agent, { computeAgentSystemPrompt, type PopulatedAgent } from './model'
-import type {
-  AgentCreateInput,
-  AgentUpdateInput,
-  AgentPromptCreateInput,
-} from './validators'
+import Agent, { type PopulatedAgent } from './model'
+import type { AgentCreateInput, AgentUpdateInput, AgentPromptCreateInput } from './validators'
+import type { AgentPayload } from '@/types'
 
-type AgentWithSystemPrompt = PopulatedAgent & { systemPrompt: string | null }
+type AgentWithSystemPrompt = PopulatedAgent & { systemPrompt?: string | null }
 
-function withSystemPrompt(agent: PopulatedAgent): AgentWithSystemPrompt {
+function normalizeSystemPrompt(agent: AgentWithSystemPrompt): AgentWithSystemPrompt {
   return {
     ...agent,
-    systemPrompt: computeAgentSystemPrompt(agent.prompts),
+    systemPrompt: agent.systemPrompt ?? null,
+  }
+}
+
+export function toAgentPayload(agent: AgentWithSystemPrompt): AgentPayload {
+  const { prompts: _omittedPrompts, systemPrompt, ...rest } = agent
+  return {
+    ...rest,
+    systemPrompt: systemPrompt ?? null,
   }
 }
 
 function buildPromptPopulate(tag?: string) {
   return {
     path: 'prompts',
-    match: { tags: tag ?? DEFAULT_PROMPT_TAG },
+    match: {
+      tags: tag ?? DEFAULT_PROMPT_TAG,
+      deletedAt: null,
+    },
   }
 }
 
@@ -42,19 +50,19 @@ async function runWithSession<T>(operation: (session: ClientSession) => Promise<
 }
 
 export async function listAgents(tag?: string): Promise<AgentWithSystemPrompt[]> {
-  const agents = await Agent.find({}, null, { autopopulate: false })
+  const agents = await Agent.find({ deletedAt: null }, null, { autopopulate: false })
     .populate(buildPromptPopulate(tag))
-    .lean<PopulatedAgent[]>()
+    .lean<AgentWithSystemPrompt[]>({ virtuals: true })
 
-  return agents.map(withSystemPrompt)
+  return agents.map(normalizeSystemPrompt)
 }
 
 export async function findAgentById(id: string, tag?: string): Promise<AgentWithSystemPrompt | null> {
-  const agent = await Agent.findById(id, null, { autopopulate: false })
+  const agent = await Agent.findOne({ _id: id, deletedAt: null }, null, { autopopulate: false })
     .populate(buildPromptPopulate(tag))
-    .lean<PopulatedAgent | null>()
+    .lean<AgentWithSystemPrompt | null>({ virtuals: true })
 
-  return agent ? withSystemPrompt(agent) : null
+  return agent ? normalizeSystemPrompt(agent) : null
 }
 
 export async function createAgent(data: AgentCreateInput): Promise<AgentWithSystemPrompt> {
@@ -80,21 +88,21 @@ export async function createAgent(data: AgentCreateInput): Promise<AgentWithSyst
     throw new Error('Failed to load agent after creation')
   }
 
-  return populatedAgent
+  return normalizeSystemPrompt(populatedAgent)
 }
 
 export async function updateAgent(id: string, data: AgentUpdateInput): Promise<AgentWithSystemPrompt | null> {
   const agentId = await runWithSession(async session => {
     const agent = await Agent.findById(id).session(session)
 
-    if (!agent) {
+    if (!agent || agent.deletedAt) {
       return null
     }
 
     agent.name = data.name
 
     if (data.prompts) {
-      await Prompt.deleteMany({ agent: agent._id }).session(session)
+      await Prompt.updateMany({ agent: agent._id, deletedAt: null }, { $set: { deletedAt: new Date() } }).session(session)
 
       const createdPrompts = await Prompt.create(
         data.prompts.map(prompt => ({
@@ -118,13 +126,13 @@ export async function updateAgent(id: string, data: AgentUpdateInput): Promise<A
   }
 
   const populatedAgent = await findAgentById(agentId.toString())
-  return populatedAgent
+  return populatedAgent ? normalizeSystemPrompt(populatedAgent) : null
 }
 
 export async function appendAgentPrompt(id: string, data: AgentPromptCreateInput): Promise<AgentWithSystemPrompt | null> {
   const agent = await Agent.findById(id).lean()
 
-  if (!agent) {
+  if (!agent || agent.deletedAt) {
     return null
   }
 
@@ -140,24 +148,27 @@ export async function appendAgentPrompt(id: string, data: AgentPromptCreateInput
     { new: true }
   )
     .populate('prompts')
-    .lean<PopulatedAgent | null>()
+    .lean<AgentWithSystemPrompt | null>({ virtuals: true })
 
   if (!updatedAgent) {
     return null
   }
 
-  return withSystemPrompt(updatedAgent)
+  return normalizeSystemPrompt(updatedAgent)
 }
 
 export async function deleteAgent(id: string): Promise<boolean> {
-  const agent = await Agent.findById(id).lean()
+  const agent = await Agent.findById(id)
 
-  if (!agent) {
+  if (!agent || agent.deletedAt) {
     return false
   }
 
-  await Prompt.deleteMany({ agent: agent._id }).lean()
-  await Agent.findByIdAndDelete(agent._id).lean()
+  const deletedAt = new Date()
+
+  await Prompt.updateMany({ agent: agent._id, deletedAt: null }, { $set: { deletedAt } }).lean()
+  agent.deletedAt = deletedAt
+  await agent.save({ validateBeforeSave: false })
 
   return true
 }

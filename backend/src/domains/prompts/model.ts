@@ -10,6 +10,7 @@ const promptSchema = new Schema(
       default: () => [DEFAULT_PROMPT_TAG],
       set: normalizeTags,
     },
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true }
 )
