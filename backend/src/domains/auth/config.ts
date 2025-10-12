@@ -1,14 +1,14 @@
 import { betterAuth } from 'better-auth'
 import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { apiKey, organization } from 'better-auth/plugins'
-import mongoose from 'mongoose'
+import { MongoClient } from 'mongodb'
 
 // import { ensureOrganizationCollections } from './ensure-organization-collections'
 
 import config from '@/config'
 
-const client = mongoose.connection.getClient()
-const database = client?.db()
+const client = new MongoClient(config.MONGODB_CONNECTION_STRING)
+const database = client.db()
 
 // ensureOrganizationCollections(database).catch((error: unknown) => {
 //   console.error('Failed to ensure organization collections', error)
