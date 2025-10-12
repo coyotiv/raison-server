@@ -6,7 +6,7 @@ import mongoose from 'mongoose'
 
 import app from './app'
 import { connectToDatabase } from './lib/database-connection'
-// import { initializeSocket } from './lib/socket'
+import { initializeSocket } from './lib/socket'
 import { seedFromFile } from './lib/seed'
 import config from './config'
 
@@ -18,7 +18,7 @@ const port = config.PORT
 app.set('port', config.PORT)
 
 const server = http.createServer(app)
-// initializeSocket(server, { app })
+initializeSocket(server, { app })
 
 function getSeedFileFromArgs(): string | undefined {
   const args = process.argv.slice(2)
