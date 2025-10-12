@@ -44,6 +44,33 @@ agentSchema.virtual('systemPrompt').get(function getSystemPrompt(this: AgentDocu
   return chosenPrompt?.systemPrompt ?? null
 })
 
+export function computeAgentSystemPrompt(prompts: Prompt[]): string | null {
+  if (!Array.isArray(prompts) || prompts.length === 0) {
+    return null
+  }
+
+  function selectLatest(candidates: Prompt[]): Prompt | null {
+    return candidates.reduce<Prompt | null>((latest, candidate) => {
+      const candidateDate = (candidate as PromptDocument).updatedAt ?? (candidate as PromptDocument).createdAt ?? new Date(0)
+
+      if (!latest) {
+        return candidate
+      }
+
+      const latestDate = (latest as PromptDocument).updatedAt ?? (latest as PromptDocument).createdAt ?? new Date(0)
+      return candidateDate > latestDate ? candidate : latest
+    }, null)
+  }
+
+  const defaultTaggedPrompts = prompts.filter(
+    (prompt) => Array.isArray(prompt.tags) && prompt.tags.includes(DEFAULT_PROMPT_TAG)
+  )
+
+  const chosenPrompt = selectLatest(defaultTaggedPrompts.length > 0 ? defaultTaggedPrompts : prompts)
+
+  return chosenPrompt?.systemPrompt ?? null
+}
+
 agentSchema.set('toJSON', { virtuals: true })
 agentSchema.set('toObject', { virtuals: true })
 

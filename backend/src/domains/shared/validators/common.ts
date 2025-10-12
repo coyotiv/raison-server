@@ -1,6 +1,6 @@
 import { Types } from 'mongoose'
 import { z } from 'zod'
-import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
+import { normalizeTags } from '@/lib/tags'
 
 export const objectIdSchema = z.any().refine((value: string) => Types.ObjectId.isValid(value), {
   message: 'Invalid ObjectId',
@@ -17,9 +17,8 @@ export const promptContentSchema = z.object({
   systemPrompt: z.string().trim().min(1, 'systemPrompt is required'),
   tags: z
     .array(tagItemSchema)
-    .nonempty('At least one tag is required')
-    .default([DEFAULT_PROMPT_TAG])
-    .transform((tags) => normalizeTags(tags)),
+    .default([])
+    .transform((tags) => normalizeTags(tags, { allowEmpty: true })),
 })
 
 export type ObjectIdInput = z.infer<typeof objectIdSchema>

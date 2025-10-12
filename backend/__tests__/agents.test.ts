@@ -27,8 +27,10 @@ describe('Agents API', () => {
       const { status, body } = await createAgent()
 
       expect(status).toBe(201)
+      console.log('TEST body createAgent', body)
       expect(body).toHaveProperty('_id')
       expect(body).toHaveProperty('name', 'Test Agent')
+      expect(body).toHaveProperty('systemPrompt', 'You are a helpful assistant.')
       expect(Array.isArray(body.prompts)).toBe(true)
       expect(body.prompts.length).toBe(1)
       expect(body.prompts[0]).toHaveProperty('systemPrompt', 'You are a helpful assistant.')
@@ -60,6 +62,9 @@ describe('Agents API', () => {
       expect(body.length).toBe(2)
       const names = (body as Array<{ name: string }>).map(a => a.name).sort()
       expect(names).toEqual(['A1', 'A2'])
+      ;(body as Array<{ systemPrompt?: string }>).forEach(agent => {
+        expect(agent).toHaveProperty('systemPrompt', 'You are a helpful assistant.')
+      })
     })
 
     it('returns 400 on invalid query (tag provided as array)', async () => {
@@ -78,6 +83,7 @@ describe('Agents API', () => {
       expect(status).toBe(200)
       expect(body).toHaveProperty('_id', id)
       expect(body).toHaveProperty('name')
+      expect(body).toHaveProperty('systemPrompt', 'You are a helpful assistant.')
     })
 
     it('returns 404 when the agent does not exist', async () => {
@@ -143,6 +149,7 @@ describe('Agents API', () => {
       expect(body.prompts.length).toBe(2)
       const promptsTexts = (body.prompts as Array<{ systemPrompt: string }>).map(p => p.systemPrompt)
       expect(promptsTexts).toEqual(expect.arrayContaining(['Initial', 'Additional prompt']))
+      expect(body).toHaveProperty('systemPrompt', 'Additional prompt')
     })
 
     it('returns 404 when agent is not found', async () => {

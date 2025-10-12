@@ -28,6 +28,7 @@ export const agentSchema = agentBaseSchema.extend({
   prompts: agentPromptArraySchema,
   createdAt: dateSchema,
   updatedAt: dateSchema,
+  systemPrompt: z.string().trim().nullable(),
 })
 
 export const agentUpdateSchema = agentBaseSchema.extend({

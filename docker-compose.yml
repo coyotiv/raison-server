@@ -43,9 +43,11 @@ services:
       - CHOKIDAR_INTERVAL=1000
       - TS_NODE_DEV_USE_POLLING=1
       - TS_NODE_DEV_POLL_INTERVAL=1000
+      - SEED_FILE=${SEED_FILE:-/app/agents.json}
     command: sh -c "npm install && npm run dev -- --poll"
     volumes:
       - ./backend:/app
+      - ./agents.json:/app/agents.json:ro
       - /app/node_modules
     labels:
       - "traefik.enable=true"

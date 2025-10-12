@@ -11,9 +11,8 @@ export const promptCreateSchema = z.object({
   systemPrompt: z.string().trim().min(1, 'systemPrompt is required'),
   tags: z
     .array(tagItemSchema)
-    .nonempty('At least one tag is required')
-    .default([DEFAULT_PROMPT_TAG])
-    .transform((tags) => normalizeTags(tags)),
+    .default([])
+    .transform((tags) => normalizeTags(tags, { allowEmpty: true })),
 })
 
 const promptSchema = z.object({
@@ -31,7 +30,7 @@ export const promptUpdateSchema = z
     tags: z
       .array(tagItemSchema)
       .optional()
-      .transform((tags) => (tags === undefined ? undefined : normalizeTags(tags))),
+      .transform((tags) => (tags === undefined ? undefined : normalizeTags(tags, { allowEmpty: true }))),
   })
   .refine((data) => data.systemPrompt !== undefined || data.tags !== undefined, {
     message: 'At least one field must be provided',

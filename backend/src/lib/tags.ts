@@ -1,8 +1,14 @@
 export const DEFAULT_PROMPT_TAG = 'default'
 
-export function normalizeTags(tags?: string[]): string[] {
+type NormalizeTagsOptions = {
+  allowEmpty?: boolean
+}
+
+export function normalizeTags(tags?: string[], options: NormalizeTagsOptions = {}): string[] {
+  const { allowEmpty = false } = options
+
   if (!Array.isArray(tags)) {
-    return [DEFAULT_PROMPT_TAG]
+    return allowEmpty ? [] : [DEFAULT_PROMPT_TAG]
   }
 
   const normalized = tags
@@ -12,12 +18,16 @@ export function normalizeTags(tags?: string[]): string[] {
 
   const unique = Array.from(new Set(normalized))
 
-  return unique.length > 0 ? unique : [DEFAULT_PROMPT_TAG]
+  if (unique.length > 0) {
+    return unique
+  }
+
+  return allowEmpty ? [] : [DEFAULT_PROMPT_TAG]
 }
 
-export function normalizeTagsOptional(tags?: string[]): string[] | undefined {
+export function normalizeTagsOptional(tags?: string[], options: NormalizeTagsOptions = {}): string[] | undefined {
   if (tags === undefined) {
     return undefined
   }
-  return normalizeTags(tags)
+  return normalizeTags(tags, options)
 }
