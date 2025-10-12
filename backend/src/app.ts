@@ -1,15 +1,16 @@
-import express from 'express'
-import cookieParser from 'cookie-parser'
-import logger from 'morgan'
+import { toNodeHandler } from 'better-auth/node'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
+import express from 'express'
+import helmet from 'helmet'
+import logger from 'morgan'
 
 import config from './config'
-import usersRouter from './domains/users/router'
 import agentsRouter from './domains/agents/router'
+import { auth } from './domains/auth/config'
+import usersRouter from './domains/users/router'
 import promptsRouter from './domains/prompts/router'
 import { errorHandler } from './lib/error-handler'
-import { toNodeHandler } from 'better-auth/node'
-import { auth } from './domains/auth/config'
 
 const app = express()
 
@@ -23,10 +24,11 @@ app.use(
   })
 )
 
-app.use(logger('dev'))
+app.use(logger('tiny'))
 
 app.all('/api/auth/*', toNodeHandler(auth))
 
+app.use(helmet())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
