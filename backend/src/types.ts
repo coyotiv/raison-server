@@ -28,7 +28,7 @@ export type PromptPayload = {
   _id: string
   agent: string
   systemPrompt: string
-  version?: string
+  tags: string[]
   [key: string]: unknown
 }
 
@@ -56,7 +56,7 @@ export type SocketAuth = {
 
 export type SeedPrompt = {
   systemPrompt: string
-  version?: string | number
+  tags?: string[]
 }
 
 export type SeedAgent = {

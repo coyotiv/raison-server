@@ -20,7 +20,7 @@ export const agentIdParamSchema = z.object({
 })
 
 export const agentListQuerySchema = z.object({
-  version: z.string().trim().optional(),
+  tag: z.string().trim().optional(),
 })
 
 export const agentPromptCreateSchema = promptContentSchema

@@ -8,8 +8,26 @@ const agentsStore = useAgentsStore()
 const agents = computed(() => agentsStore.agents)
 
 const newAgentName = ref('')
-const newAgentPrompts = ref<Array<{ systemPrompt: string; version: string }>>([
-  { systemPrompt: '', version: '' },
+const DEFAULT_PROMPT_TAG = 'default'
+
+function parseTags(input: string): string[] {
+  const tags = input
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0)
+  const unique = Array.from(new Set(tags))
+  return unique.length > 0 ? unique : [DEFAULT_PROMPT_TAG]
+}
+
+function formatTags(tags?: string[]): string {
+  if (!Array.isArray(tags) || tags.length === 0) {
+    return DEFAULT_PROMPT_TAG
+  }
+  return tags.join(', ')
+}
+
+const newAgentPrompts = ref<Array<{ systemPrompt: string; tags: string }>>([
+  { systemPrompt: '', tags: DEFAULT_PROMPT_TAG },
 ])
 const newAgentError = ref('')
 const isCreatingAgent = ref(false)
@@ -29,13 +47,13 @@ const promptForm = reactive<{
   agentId: string
   promptId: string | null
   systemPrompt: string
-  version: string
+  tags: string
 }>(
   {
     agentId: '',
     promptId: null,
     systemPrompt: '',
-    version: '',
+    tags: DEFAULT_PROMPT_TAG,
   }
 )
 const isSavingPrompt = ref(false)
@@ -45,7 +63,7 @@ function resetPromptForm() {
   promptForm.agentId = ''
   promptForm.promptId = null
   promptForm.systemPrompt = ''
-  promptForm.version = ''
+  promptForm.tags = DEFAULT_PROMPT_TAG
 }
 
 function closePromptDialog() {
@@ -71,13 +89,9 @@ async function handleCreateAgent() {
   const preparedPrompts = newAgentPrompts.value
     .map((prompt) => ({
       systemPrompt: prompt.systemPrompt.trim(),
-      version: prompt.version.trim(),
+      tags: parseTags(prompt.tags),
     }))
     .filter((prompt) => prompt.systemPrompt.length > 0)
-    .map((prompt) => ({
-      systemPrompt: prompt.systemPrompt,
-      ...(prompt.version.length ? { version: prompt.version } : {}),
-    }))
 
   if (!preparedPrompts.length) {
     newAgentError.value = 'Please provide at least one prompt'
@@ -88,19 +102,19 @@ async function handleCreateAgent() {
   try {
     await agentsStore.createAgent({ name: trimmedName, prompts: preparedPrompts })
     newAgentName.value = ''
-    newAgentPrompts.value = [{ systemPrompt: '', version: '' }]
+    newAgentPrompts.value = [{ systemPrompt: '', tags: DEFAULT_PROMPT_TAG }]
   } finally {
     isCreatingAgent.value = false
   }
 }
 
 function addNewAgentPromptField() {
-  newAgentPrompts.value.push({ systemPrompt: '', version: '' })
+  newAgentPrompts.value.push({ systemPrompt: '', tags: DEFAULT_PROMPT_TAG })
 }
 
 function removeNewAgentPromptField(index: number) {
   if (newAgentPrompts.value.length === 1) {
-    newAgentPrompts.value.splice(0, 1, { systemPrompt: '', version: '' })
+    newAgentPrompts.value.splice(0, 1, { systemPrompt: '', tags: DEFAULT_PROMPT_TAG })
     return
   }
 
@@ -144,11 +158,11 @@ function openPromptDialog(agent: AgentDocument, prompt?: AgentPrompt) {
   if (prompt) {
     promptForm.promptId = prompt._id
     promptForm.systemPrompt = prompt.systemPrompt
-    promptForm.version = prompt.version ?? ''
+    promptForm.tags = formatTags(prompt.tags)
   } else {
     promptForm.promptId = null
     promptForm.systemPrompt = ''
-    promptForm.version = ''
+    promptForm.tags = DEFAULT_PROMPT_TAG
   }
   isPromptDialogOpen.value = true
 }
@@ -159,11 +173,9 @@ async function submitPromptForm() {
   }
   isSavingPrompt.value = true
   try {
-    const payload: { systemPrompt: string; version?: string } = {
+    const payload: { systemPrompt: string; tags: string[] } = {
       systemPrompt: promptForm.systemPrompt.trim(),
-    }
-    if (promptForm.version && promptForm.version.trim()) {
-      payload.version = promptForm.version.trim()
+      tags: parseTags(promptForm.tags),
     }
 
     if (promptForm.promptId) {
@@ -235,8 +247,8 @@ async function handleDeletePrompt(prompt: AgentPrompt) {
                 />
                 <div class="d-flex flex-wrap align-center ga-3">
                   <v-text-field
-                    v-model="prompt.version"
-                    label="Version (optional)"
+                    v-model="prompt.tags"
+                    label="Tags (comma-separated)"
                     variant="outlined"
                     :disabled="isCreatingAgent"
                     class="flex-grow-1"
@@ -339,7 +351,7 @@ async function handleDeletePrompt(prompt: AgentPrompt) {
                             {{ prompt.systemPrompt }}
                           </v-list-item-title>
                           <v-list-item-subtitle class="text-caption text-medium-emphasis">
-                            Version: {{ prompt.version }} · Updated {{ new Date(prompt.updatedAt).toLocaleString() }}
+                            Tags: {{ formatTags(prompt.tags) }} · Updated {{ new Date(prompt.updatedAt).toLocaleString() }}
                           </v-list-item-subtitle>
                         </div>
                         <div class="d-flex align-center ga-1">
@@ -403,8 +415,8 @@ async function handleDeletePrompt(prompt: AgentPrompt) {
               :disabled="isSavingPrompt"
             />
             <v-text-field
-              v-model="promptForm.version"
-              label="Version (optional)"
+              v-model="promptForm.tags"
+              label="Tags (comma-separated)"
               variant="outlined"
               :disabled="isSavingPrompt"
             />

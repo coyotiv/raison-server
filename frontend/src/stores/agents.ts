@@ -15,7 +15,7 @@ export type AgentPrompt = {
   _id: string
   agent: string
   systemPrompt: string
-  version: string
+  tags: string[]
   createdAt: string
   updatedAt: string
 }
@@ -96,7 +96,7 @@ export const useAgentsStore = defineStore('agents', {
         this.agents.splice(index, 1)
       }
     },
-    async createAgent(payload: { name: string; prompts: { systemPrompt: string; version?: string }[] }) {
+    async createAgent(payload: { name: string; prompts: { systemPrompt: string; tags: string[] }[] }) {
       this.error = null
       try {
         const response = await axios.post<AgentDocument>(
@@ -140,7 +140,7 @@ export const useAgentsStore = defineStore('agents', {
         throw err
       }
     },
-    async createPrompt(agentId: string, payload: { systemPrompt: string; version?: string }) {
+    async createPrompt(agentId: string, payload: { systemPrompt: string; tags: string[] }) {
       this.error = null
       try {
         const response = await axios.post<AgentDocument>(
@@ -157,7 +157,7 @@ export const useAgentsStore = defineStore('agents', {
         throw err
       }
     },
-    async updatePrompt(promptId: string, payload: { systemPrompt?: string; version?: string }) {
+    async updatePrompt(promptId: string, payload: { systemPrompt?: string; tags?: string[] }) {
       this.error = null
       try {
         const response = await axios.put<AgentDocument>(

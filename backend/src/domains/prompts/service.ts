@@ -1,5 +1,6 @@
 import Prompt from './model'
 import Agent from '@/domains/agents/model'
+import { normalizeTags } from '@/lib/tags'
 import type { PromptDocument } from './model'
 import type { AgentDocument } from '@/domains/agents/model'
 import type { PromptCreateInput, PromptUpdateInput } from './validators'
@@ -34,7 +35,7 @@ export async function createPrompt(data: PromptCreateInput): Promise<CreatePromp
   await Prompt.create({
     agent: agent._id,
     systemPrompt: data.systemPrompt,
-    ...(data.version ? { version: data.version } : {}),
+    tags: normalizeTags(data.tags),
   })
 
   const updatedAgent = await Agent.findById(agent._id)
@@ -46,7 +47,17 @@ export type UpdatePromptResult =
   | { status: 'SUCCESS'; agent: AgentDocument | null }
 
 export async function updatePrompt(id: string, data: PromptUpdateInput): Promise<UpdatePromptResult> {
-  const prompt = await Prompt.findByIdAndUpdate(id, data, {
+  const updateData: Record<string, unknown> = {}
+
+  if (data.systemPrompt !== undefined) {
+    updateData.systemPrompt = data.systemPrompt
+  }
+
+  if (data.tags !== undefined) {
+    updateData.tags = normalizeTags(data.tags)
+  }
+
+  const prompt = await Prompt.findByIdAndUpdate(id, updateData, {
     new: true,
     runValidators: true,
   })

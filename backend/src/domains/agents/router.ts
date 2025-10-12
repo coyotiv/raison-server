@@ -38,7 +38,7 @@ agentsRouter.get(
         return res.status(400).json({ message: formatZodError(parsedQuery.error) })
       }
 
-      const agents = await listAgents(parsedQuery.data.version)
+      const agents = await listAgents(parsedQuery.data.tag)
       return res.json(agents as AgentDocument[])
     } catch (error) {
       next(error)
@@ -65,7 +65,7 @@ agentsRouter.get(
         return res.status(400).json({ message: formatZodError(parsedQuery.error) })
       }
 
-      const agent = await findAgentById(parsedParams.data.id, parsedQuery.data.version)
+      const agent = await findAgentById(parsedParams.data.id, parsedQuery.data.tag)
       if (!agent) {
         return res.sendStatus(404)
       }

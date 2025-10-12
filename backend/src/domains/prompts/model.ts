@@ -1,17 +1,15 @@
 import { Schema, model, HydratedDocument, Model, InferSchemaType } from 'mongoose'
 import autopopulate from 'mongoose-autopopulate'
+import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
 
 const promptSchema = new Schema(
   {
     agent: { type: Schema.Types.ObjectId, ref: 'Agent', required: true },
     systemPrompt: { type: String, required: true },
-    version: {
-      type: String,
-      default: function defaultVersion(this: PromptDocument) {
-        const timestamp = this._id?.getTimestamp?.() ?? this.createdAt ?? new Date()
-        return new Date(timestamp).toISOString()
-      },
-      immutable: true,
+    tags: {
+      type: [String],
+      default: () => [DEFAULT_PROMPT_TAG],
+      set: normalizeTags,
     },
   },
   { timestamps: true }

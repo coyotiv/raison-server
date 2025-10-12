@@ -48,7 +48,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
         return
       }
 
-      const agents = await listAgents(parsedQuery.data.version)
+      const agents = await listAgents(parsedQuery.data.tag)
       respondWithSuccess(callback, agents.map(toAgentPayload))
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to list agents'))
@@ -63,13 +63,13 @@ function registerAgentSocketHandlers(socket: Socket): void {
         return
       }
 
-      const parsedQuery = agentListQuerySchema.safeParse(payload ? { version: payload.version } : {})
+      const parsedQuery = agentListQuerySchema.safeParse(payload ? { tag: payload.tag } : {})
       if (!parsedQuery.success) {
         respondWithError(callback, formatZodError(parsedQuery.error))
         return
       }
 
-      const agent = await findAgentById(parsedParams.data.id, parsedQuery.data.version)
+      const agent = await findAgentById(parsedParams.data.id, parsedQuery.data.tag)
 
       if (!agent) {
         respondWithError(callback, 'Agent not found')

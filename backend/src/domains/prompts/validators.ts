@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { objectIdSchema } from '@/domains/shared/validators'
+import { objectIdSchema, tagItemSchema } from '@/domains/shared/validators'
+import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
 
 export const promptListQuerySchema = z.object({
   agentId: objectIdSchema.optional(),
@@ -8,15 +9,22 @@ export const promptListQuerySchema = z.object({
 export const promptCreateSchema = z.object({
   agentId: objectIdSchema,
   systemPrompt: z.string().trim().min(1, 'systemPrompt is required'),
-  version: z.string().trim().min(1).optional(),
+  tags: z
+    .array(tagItemSchema)
+    .nonempty('At least one tag is required')
+    .default([DEFAULT_PROMPT_TAG])
+    .transform((tags) => normalizeTags(tags)),
 })
 
 export const promptUpdateSchema = z
   .object({
     systemPrompt: z.string().trim().min(1, 'systemPrompt is required').optional(),
-    version: z.string().trim().min(1).optional(),
+    tags: z
+      .array(tagItemSchema)
+      .optional()
+      .transform((tags) => (tags === undefined ? undefined : normalizeTags(tags))),
   })
-  .refine((data) => data.systemPrompt !== undefined || data.version !== undefined, {
+  .refine((data) => data.systemPrompt !== undefined || data.tags !== undefined, {
     message: 'At least one field must be provided',
   })
 

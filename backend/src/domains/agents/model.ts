@@ -1,6 +1,7 @@
 import { Schema, model, HydratedDocument, Model, InferSchemaType, Types } from 'mongoose'
 import autopopulate from 'mongoose-autopopulate'
 import type { PromptDocument } from '@/domains/prompts/model'
+import { DEFAULT_PROMPT_TAG } from '@/lib/tags'
 
 const agentSchema = new Schema(
   {
@@ -13,29 +14,32 @@ const agentSchema = new Schema(
 agentSchema.virtual('systemPrompt').get(function getSystemPrompt(this: AgentDocument) {
   const prompts = (this.prompts ?? []) as Array<PromptDocument | Types.ObjectId>
 
-  let latestPrompt: PromptDocument | null = null
+  const materializedPrompts = prompts.filter(
+    (prompt): prompt is PromptDocument => !(prompt instanceof Types.ObjectId)
+  )
 
-  for (const promptRef of prompts) {
-    if (promptRef instanceof Types.ObjectId) {
-      continue
-    }
-
-    const candidate = promptRef
-    const candidateDate = candidate.updatedAt ?? candidate.createdAt ?? new Date(0)
-
-    if (!latestPrompt) {
-      latestPrompt = candidate
-      continue
-    }
-
-    const latestDate = latestPrompt.updatedAt ?? latestPrompt.createdAt ?? new Date(0)
-
-    if (candidateDate > latestDate) {
-      latestPrompt = candidate
-    }
+  if (materializedPrompts.length === 0) {
+    return null
   }
 
-  return latestPrompt?.systemPrompt ?? null
+  function selectLatest(candidates: PromptDocument[]): PromptDocument | null {
+    return candidates.reduce<PromptDocument | null>((latest, candidate) => {
+      const candidateDate = candidate.updatedAt ?? candidate.createdAt ?? new Date(0)
+      if (!latest) {
+        return candidate
+      }
+      const latestDate = latest.updatedAt ?? latest.createdAt ?? new Date(0)
+      return candidateDate > latestDate ? candidate : latest
+    }, null)
+  }
+
+  const defaultTaggedPrompts = materializedPrompts.filter(
+    (prompt) => Array.isArray(prompt.tags) && prompt.tags.includes(DEFAULT_PROMPT_TAG)
+  )
+
+  const chosenPrompt = selectLatest(defaultTaggedPrompts.length > 0 ? defaultTaggedPrompts : materializedPrompts)
+
+  return chosenPrompt?.systemPrompt ?? null
 })
 
 agentSchema.set('toJSON', { virtuals: true })
