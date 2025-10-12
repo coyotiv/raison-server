@@ -10,6 +10,7 @@ import agentsRouter from './domains/agents/router'
 import { auth } from './domains/auth/config'
 import promptsRouter from './domains/prompts/router'
 import { errorHandler } from './lib/error-handler'
+import { attachUser } from './lib/attach-user'
 
 const app = express()
 
@@ -31,6 +32,8 @@ app.use(helmet())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
+
+app.use(attachUser)
 
 app.get('/ping', (_req, res) => {
   res.sendStatus(200)
