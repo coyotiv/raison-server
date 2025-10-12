@@ -15,8 +15,8 @@ const database = client?.db()
 // })
 
 export const auth = betterAuth({
+  appName: 'Raison',
   secret: config.BETTER_AUTH_SECRET,
-  baseURL: config.BETTER_AUTH_URL,
   database: mongodbAdapter(database),
   plugins: [
     apiKey({
@@ -29,7 +29,17 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  socialProviders: {
+    google: {
+      enabled: true,
+      prompt: 'select_account',
+      scope: ['email', 'profile'],
+      clientId: config.GOOGLE_CLIENT_ID,
+      clientSecret: config.GOOGLE_CLIENT_SECRET,
+    },
+  },
   rateLimit: {
     enabled: false,
   },
+  trustedOrigins: config.CORS_ORIGINS,
 })

@@ -11,7 +11,8 @@ const configSchema = z.object({
   API_KEY: z.string().default('test-api-key'),
   API_KEY_HEADERS: z.string().default('x-api-key'),
   BETTER_AUTH_SECRET: z.string().default('test-secret'),
-  BETTER_AUTH_URL: z.string().default('http://localhost:3000'),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
 })
 
 const config = configSchema.parse(process.env)
