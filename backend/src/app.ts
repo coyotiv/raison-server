@@ -1,22 +1,18 @@
-import createError from 'http-errors'
-import express, { Application, Request, Response, NextFunction } from 'express'
+import express from 'express'
 import cookieParser from 'cookie-parser'
 import logger from 'morgan'
 import cors from 'cors'
-import dotenv from 'dotenv'
-import usersRouter from '@/domains/users/router'
-import agentsRouter from '@/domains/agents/router'
-import promptsRouter from '@/domains/prompts/router'
-import authRouter, { getSessionHandler } from '@/domains/auth/router'
-import '@/lib/database-connection'
 
-dotenv.config()
+import config from './config'
+import authRouter, { getSessionHandler } from './domains/auth/router'
+import usersRouter from './domains/users/router'
+import agentsRouter from './domains/agents/router'
+import promptsRouter from './domains/prompts/router'
+import { errorHandler } from './lib/error-handler'
 
-const app: Application = express()
+const app = express()
 
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
-  : ['http://localhost', 'http://localhost:5173']
+const allowedOrigins = config.CORS_ORIGINS.length > 0 ? config.CORS_ORIGINS : []
 
 app.use(
   cors({
@@ -32,11 +28,11 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 
-app.get('/', (_req: Request, res: Response) => {
+app.get('/', (_req, res) => {
   res.render('index', { title: 'Express' })
 })
 
-app.get('/ping', (_req: Request, res: Response) => {
+app.get('/ping', (_req, res) => {
   res.sendStatus(200)
 })
 
@@ -45,22 +41,6 @@ app.use('/users', usersRouter)
 app.use('/agents', agentsRouter)
 app.use('/prompts', promptsRouter)
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  next(createError(404))
-})
-
-app.use((err: createError.HttpError, req: Request, res: Response, _next: NextFunction) => {
-  const status = err.status || 500
-  const responseBody: { status: number; message: string; stack?: string } = {
-    status,
-    message: err.message,
-  }
-
-  if (req.app.get('env') === 'development') {
-    responseBody.stack = err.stack
-  }
-
-  res.status(status).send(responseBody)
-})
+app.use(errorHandler)
 
 export default app

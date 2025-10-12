@@ -6,19 +6,27 @@
   "parserOptions": {
     "ecmaVersion": 2020
   },
-  "extends": [
-    "airbnb",
-    "prettier",
-    "prettier/standard"
-  ],
+  "extends": ["airbnb-base", "prettier"],
   "rules": {
     "eqeqeq": "off",
     "class-methods-use-this": "off",
-    "eslint-plugin-import/no-extraneous-dependencies": "off"
+    "import/no-extraneous-dependencies": "off",
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "ts": "never",
+        "js": "never"
+      }
+    ],
+    "no-console": "off"
   },
   "settings": {
-    "react": {
-      "version": "latest"
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".ts", ".d.ts", ".json"]
+      }
     }
-  }
+  },
+  "ignorePatterns": ["dist/", "coverage/"]
 }

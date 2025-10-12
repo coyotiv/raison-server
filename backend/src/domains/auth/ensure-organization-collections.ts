@@ -1,4 +1,5 @@
 import type { Db } from 'mongodb'
+import mongoose from 'mongoose'
 
 type CollectionDefinition = {
   name: string
@@ -126,6 +127,7 @@ const collections: CollectionDefinition[] = [
 ]
 
 export async function ensureOrganizationCollections(db: Db): Promise<void> {
+  
   const existingCollections = new Set(
     (await db.listCollections({}, { nameOnly: true }).toArray()).map((collection) => collection.name)
   )

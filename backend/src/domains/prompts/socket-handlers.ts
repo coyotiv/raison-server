@@ -1,20 +1,10 @@
 import type { Socket } from 'socket.io'
-import {
-  promptListQuerySchema,
-  promptCreateSchema,
-  promptUpdateSchema,
-  promptIdParamSchema,
-} from './validators'
-import {
-  listPrompts,
-  findPromptById,
-  createPrompt,
-  updatePrompt,
-  deletePrompt,
-} from './service'
+
 import { respondWithError, respondWithSuccess, formatUnknownError } from '@/domains/shared/socket'
-import { toAgentPayload, toPromptPayload } from '@/domains/shared/serialization'
 import type { PromptsInitialEvent } from '@/types'
+
+import { listPrompts, findPromptById, createPrompt, updatePrompt, deletePrompt } from './service'
+import { promptListQuerySchema, promptCreateSchema, promptUpdateSchema, promptIdParamSchema } from './validators'
 
 function registerPromptSocketHandlers(socket: Socket): void {
   async function emitInitialPrompts(): Promise<void> {
@@ -22,13 +12,13 @@ function registerPromptSocketHandlers(socket: Socket): void {
     const payload: PromptsInitialEvent = {
       type: 'prompts.initial',
       at: new Date().toISOString(),
-      prompts: prompts.map(toPromptPayload),
+      prompts,
     }
 
     socket.emit('prompts.initial', payload)
   }
 
-  emitInitialPrompts().catch((error) => {
+  emitInitialPrompts().catch(error => {
     const message = formatUnknownError(error, 'Failed to send initial prompts')
     console.error(message)
   })
@@ -42,7 +32,7 @@ function registerPromptSocketHandlers(socket: Socket): void {
       }
 
       const prompts = await listPrompts(parsedQuery.data.agentId)
-      respondWithSuccess(callback, prompts.map(toPromptPayload))
+      respondWithSuccess(callback, prompts)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to list prompts'))
     }
@@ -63,7 +53,7 @@ function registerPromptSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, toPromptPayload(prompt))
+      respondWithSuccess(callback, prompt)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to fetch prompt'))
     }
@@ -84,7 +74,7 @@ function registerPromptSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, toAgentPayload(result.agent))
+      respondWithSuccess(callback, result.agent)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to create prompt'))
     }
@@ -111,7 +101,7 @@ function registerPromptSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, result.agent ? toAgentPayload(result.agent) : null)
+      respondWithSuccess(callback, result.agent ? result.agent : null)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to update prompt'))
     }
@@ -132,7 +122,7 @@ function registerPromptSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, result.agent ? toAgentPayload(result.agent) : null)
+      respondWithSuccess(callback, result.agent ? result.agent : null)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to delete prompt'))
     }

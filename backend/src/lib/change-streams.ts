@@ -7,15 +7,15 @@ import type {
   ChangeStreamUpdateDocument,
   Document as MongoDocument,
 } from 'mongodb'
-import type { Server as SocketIOServer, Socket } from 'socket.io'
 import type { Types } from 'mongoose'
-import Agent, { AgentDocument } from '@/domains/agents/model'
+import type { Server as SocketIOServer, Socket } from 'socket.io'
+
+import Agent, { type PopulatedAgent } from '@/domains/agents/model'
 import Prompt from '@/domains/prompts/model'
-import type { AgentChangedEvent, AgentDeletedEvent, AgentPayload } from '@/types'
-import { toAgentPayload } from '@/domains/shared/serialization'
 import registerAgentSocketHandlers from '@/domains/agents/socket-handlers'
 import registerPromptSocketHandlers from '@/domains/prompts/socket-handlers'
 import registerUserSocketHandlers from '@/domains/users/socket-handlers'
+import type { AgentChangedEvent, AgentDeletedEvent, AgentPayload } from '@/types'
 
 type GenericChangeStream = ChangeStream<MongoDocument>
 
@@ -38,18 +38,10 @@ function hasDocumentKey(
 
 const logPrefix = '[change-stream]'
 
-function serializeAgentDocument(agent: AgentDocument | null): AgentPayload | null {
-  if (!agent) {
-    return null
-  }
-
-  return toAgentPayload(agent)
-}
-
 async function fetchSerializedAgent(agentId: Types.ObjectId | string): Promise<AgentPayload | null> {
   try {
-    const agent = await Agent.findById(agentId)
-    return serializeAgentDocument(agent)
+    const agent = (await Agent.findById(agentId).lean()) as PopulatedAgent | null
+    return agent
   } catch (error) {
     console.error(`${logPrefix} Error fetching agent:`, error)
     return null
@@ -99,7 +91,7 @@ function startAgentChangeStream(io: SocketIOServer): GenericChangeStream {
     let fullDocument: AgentPayload | null = null
 
     if (isInsertChange(change) && change.fullDocument) {
-      fullDocument = serializeAgentDocument(Agent.hydrate(change.fullDocument as MongoDocument))
+      fullDocument = Agent.hydrate(change.fullDocument) as unknown as PopulatedAgent
     }
 
     if (isUpdateChange(change) && change.documentKey && '_id' in change.documentKey) {
@@ -146,7 +138,8 @@ function startPromptChangeStream(io: SocketIOServer): GenericChangeStream {
     const agentId =
       (isInsertChange(change) && change.fullDocument && 'agent' in change.fullDocument
         ? (change.fullDocument.agent as Types.ObjectId | string)
-        : null) ?? (hasDocumentKey(change) ? (change.documentKey._id as Types.ObjectId | string | undefined) : undefined)
+        : null) ??
+      (hasDocumentKey(change) ? (change.documentKey._id as Types.ObjectId | string | undefined) : undefined)
 
     if (!agentId) {
       console.log(`${logPrefix} No agent ID found for prompt change`)

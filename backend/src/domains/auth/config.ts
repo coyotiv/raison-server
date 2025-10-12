@@ -1,26 +1,22 @@
 import { betterAuth } from 'better-auth'
 import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { apiKey, organization } from 'better-auth/plugins'
-import { ensureOrganizationCollections } from './ensure-organization-collections'
-import { connection } from '@/lib/database-connection'
+import mongoose from 'mongoose'
 
-const secret = process.env.BETTER_AUTH_SECRET
-if (!secret) {
-  throw new Error('BETTER_AUTH_SECRET environment variable must be defined')
-}
+// import { ensureOrganizationCollections } from './ensure-organization-collections'
 
-const baseURL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'
+import config from '@/config'
 
-const mongoClient = connection.getClient()
-const database = mongoClient.db()
+const client = mongoose.connection.getClient()
+const database = client?.db()
 
-ensureOrganizationCollections(database).catch((error: unknown) => {
-  console.error('Failed to ensure organization collections', error)
-})
+// ensureOrganizationCollections(database).catch((error: unknown) => {
+//   console.error('Failed to ensure organization collections', error)
+// })
 
 export const auth = betterAuth({
-  secret,
-  baseURL,
+  secret: config.BETTER_AUTH_SECRET,
+  baseURL: config.BETTER_AUTH_URL,
   database: mongodbAdapter(database),
   plugins: [
     apiKey({

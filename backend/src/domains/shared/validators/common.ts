@@ -2,12 +2,14 @@ import { Types } from 'mongoose'
 import { z } from 'zod'
 import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
 
-export const objectIdSchema = z
-  .string()
-  .trim()
-  .refine((value: string) => Types.ObjectId.isValid(value), {
-    message: 'Invalid ObjectId',
-  })
+export const objectIdSchema = z.any().refine((value: string) => Types.ObjectId.isValid(value), {
+  message: 'Invalid ObjectId',
+})
+export const dateSchema = z.any()
+
+export const errorSchema = z.object({
+  message: z.string().trim().min(1, 'Message is required'),
+})
 
 export const tagItemSchema = z.string().trim().min(1, 'tags must be non-empty strings')
 
