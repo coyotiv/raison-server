@@ -7,10 +7,20 @@ import {
   agentCreateSchema,
   agentUpdateSchema,
   agentIdParamSchema,
+  agentNameParamSchema,
   agentPromptCreateSchema,
   agentTagsQuerySchema,
 } from './validators'
-import { listAgents, findAgentById, createAgent, updateAgent, appendAgentPrompt, deleteAgent, toAgentPayload } from './service'
+import {
+  listAgents,
+  findAgentById,
+  findAgentByName,
+  createAgent,
+  updateAgent,
+  appendAgentPrompt,
+  deleteAgent,
+  toAgentPayload,
+} from './service'
 import { respondWithError, respondWithSuccess, formatUnknownError } from '../shared/socket'
 
 function registerAgentSocketHandlers(socket: Socket): void {
@@ -159,6 +169,36 @@ function registerAgentSocketHandlers(socket: Socket): void {
       respondWithSuccess(callback, true)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to delete agent'))
+    }
+  })
+
+  socket.on('agent:get', async (payload, callback) => {
+    try {
+      const parsedParams = agentNameParamSchema.safeParse(payload ?? {})
+      if (!parsedParams.success) {
+        respondWithError(callback, formatZodError(parsedParams.error))
+        return
+      }
+
+      const agent = await findAgentByName(parsedParams.data.name)
+
+      if (!agent) {
+        respondWithError(callback, `Agent with name "${parsedParams.data.name}" not found`)
+        return
+      }
+
+      respondWithSuccess(callback, { agent })
+    } catch (error) {
+      respondWithError(callback, formatUnknownError(error, 'Failed to fetch agent by name'))
+    }
+  })
+
+  socket.on('agents:getAll', async (payload, callback) => {
+    try {
+      const agents = await listAgents()
+      respondWithSuccess(callback, { agents })
+    } catch (error) {
+      respondWithError(callback, formatUnknownError(error, 'Failed to fetch all agents'))
     }
   })
 }

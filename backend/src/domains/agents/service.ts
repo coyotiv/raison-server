@@ -65,6 +65,12 @@ export async function findAgentById(id: string, tag?: string): Promise<AgentWith
   return agent ? normalizeSystemPrompt(agent) : null
 }
 
+export async function findAgentByName(name: string, tag?: string) {
+  const agent = await Agent.findOne({ name }, null, { autopopulate: false }).populate(buildPromptPopulate(tag)).lean()
+
+  return agent as PopulatedAgent | null
+}
+
 export async function createAgent(data: AgentCreateInput): Promise<AgentWithSystemPrompt> {
   const agentId = await runWithSession(async session => {
     const [agent] = await Agent.create([{ name: data.name }], { session })

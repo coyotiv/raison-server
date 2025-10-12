@@ -19,6 +19,10 @@ export const agentIdParamSchema = z.object({
   id: objectIdSchema,
 })
 
+export const agentNameParamSchema = z.object({
+  name: z.string().trim().min(1, 'Agent name is required'),
+})
+
 export const agentTagsQuerySchema = z.object({
   tag: z.string().trim().optional(),
 })
