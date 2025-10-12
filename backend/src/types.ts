@@ -23,12 +23,6 @@ export type AgentDeletedEvent = {
   agentId: ID
 }
 
-export type AgentsInitialEvent = {
-  type: 'agents.initial'
-  at: string
-  agents: AgentPayload[]
-}
-
 export type PromptPayload = {
   _id: ID
   agent: ID

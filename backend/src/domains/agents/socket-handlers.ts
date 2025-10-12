@@ -1,45 +1,12 @@
 import type { Socket } from 'socket.io'
 
 import { formatZodError } from '@/lib/error-handler'
-import type { AgentsInitialEvent } from '@/types'
 
-import {
-  agentCreateSchema,
-  agentUpdateSchema,
-  agentIdParamSchema,
-  agentNameParamSchema,
-  agentPromptCreateSchema,
-  agentTagsQuerySchema,
-} from './validators'
-import {
-  listAgents,
-  findAgentById,
-  findAgentByName,
-  createAgent,
-  updateAgent,
-  appendAgentPrompt,
-  deleteAgent,
-  toAgentPayload,
-} from './service'
+import { agentNameParamSchema, agentTagsQuerySchema } from './validators'
+import { listAgents, findAgentByName, toAgentPayload } from './service'
 import { respondWithError, respondWithSuccess, formatUnknownError } from '../shared/socket'
 
 function registerAgentSocketHandlers(socket: Socket): void {
-  async function emitInitialAgents(): Promise<void> {
-    const agents = await listAgents()
-    const payload: AgentsInitialEvent = {
-      type: 'agents.initial',
-      at: new Date().toISOString(),
-      agents: agents.map(toAgentPayload),
-    }
-
-    socket.emit('agents.initial', payload)
-  }
-
-  emitInitialAgents().catch(error => {
-    const message = formatUnknownError(error, 'Failed to send initial agents')
-    console.error(message)
-  })
-
   socket.on('agents:list', async (payload, callback) => {
     try {
       const parsedQuery = agentTagsQuerySchema.safeParse(payload ?? {})
@@ -55,124 +22,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
     }
   })
 
-  socket.on('agents:get', async (payload, callback) => {
-    try {
-      const parsedParams = agentIdParamSchema.safeParse(payload ?? {})
-      if (!parsedParams.success) {
-        respondWithError(callback, formatZodError(parsedParams.error))
-        return
-      }
-
-      const parsedQuery = agentTagsQuerySchema.safeParse(payload ? { tag: payload.tag } : {})
-      if (!parsedQuery.success) {
-        respondWithError(callback, formatZodError(parsedQuery.error))
-        return
-      }
-
-      const agent = await findAgentById(parsedParams.data.id, parsedQuery.data.tag)
-
-      if (!agent) {
-        respondWithError(callback, 'Agent not found')
-        return
-      }
-
-      respondWithSuccess(callback, toAgentPayload(agent))
-    } catch (error) {
-      respondWithError(callback, formatUnknownError(error, 'Failed to fetch agent'))
-    }
-  })
-
-  socket.on('agents:create', async (payload, callback) => {
-    try {
-      const parsedBody = agentCreateSchema.safeParse(payload)
-      if (!parsedBody.success) {
-        respondWithError(callback, formatZodError(parsedBody.error))
-        return
-      }
-
-      const agent = await createAgent(parsedBody.data)
-      respondWithSuccess(callback, toAgentPayload(agent))
-    } catch (error) {
-      respondWithError(callback, formatUnknownError(error, 'Failed to create agent'))
-    }
-  })
-
-  socket.on('agents:update', async (payload, callback) => {
-    try {
-      const parsedParams = agentIdParamSchema.safeParse(payload ?? {})
-      if (!parsedParams.success) {
-        respondWithError(callback, formatZodError(parsedParams.error))
-        return
-      }
-
-      const parsedBody = agentUpdateSchema.safeParse(payload?.data ?? payload?.body ?? {})
-      if (!parsedBody.success) {
-        respondWithError(callback, formatZodError(parsedBody.error))
-        return
-      }
-
-      const agent = await updateAgent(parsedParams.data.id, parsedBody.data)
-
-      if (!agent) {
-        respondWithError(callback, 'Agent not found')
-        return
-      }
-
-      respondWithSuccess(callback, toAgentPayload(agent))
-    } catch (error) {
-      respondWithError(callback, formatUnknownError(error, 'Failed to update agent'))
-    }
-  })
-
-  socket.on('agents:addPrompt', async (payload, callback) => {
-    try {
-      const parsedParams = agentIdParamSchema.safeParse(payload ?? {})
-      if (!parsedParams.success) {
-        respondWithError(callback, formatZodError(parsedParams.error))
-        return
-      }
-
-      const parsedBody = agentPromptCreateSchema.safeParse(payload?.prompt)
-      if (!parsedBody.success) {
-        respondWithError(callback, formatZodError(parsedBody.error))
-        return
-      }
-
-      const agent = await appendAgentPrompt(parsedParams.data.id, parsedBody.data)
-
-      if (!agent) {
-        respondWithError(callback, 'Agent not found')
-        return
-      }
-
-      respondWithSuccess(callback, toAgentPayload(agent))
-    } catch (error) {
-      respondWithError(callback, formatUnknownError(error, 'Failed to add agent prompt'))
-    }
-  })
-
-  socket.on('agents:delete', async (payload, callback) => {
-    try {
-      const parsedParams = agentIdParamSchema.safeParse(payload ?? {})
-      if (!parsedParams.success) {
-        respondWithError(callback, formatZodError(parsedParams.error))
-        return
-      }
-
-      const deleted = await deleteAgent(parsedParams.data.id)
-
-      if (!deleted) {
-        respondWithError(callback, 'Agent not found')
-        return
-      }
-
-      respondWithSuccess(callback, true)
-    } catch (error) {
-      respondWithError(callback, formatUnknownError(error, 'Failed to delete agent'))
-    }
-  })
-
-  socket.on('agent:get', async (payload, callback) => {
+  socket.on('agents:getByName', async (payload, callback) => {
     try {
       const parsedParams = agentNameParamSchema.safeParse(payload ?? {})
       if (!parsedParams.success) {
@@ -187,18 +37,9 @@ function registerAgentSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, { agent })
+      respondWithSuccess(callback, toAgentPayload(agent))
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to fetch agent by name'))
-    }
-  })
-
-  socket.on('agents:getAll', async (payload, callback) => {
-    try {
-      const agents = await listAgents()
-      respondWithSuccess(callback, { agents })
-    } catch (error) {
-      respondWithError(callback, formatUnknownError(error, 'Failed to fetch all agents'))
     }
   })
 }
