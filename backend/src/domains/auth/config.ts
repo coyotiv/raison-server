@@ -41,5 +41,11 @@ export const auth = betterAuth({
   rateLimit: {
     enabled: false,
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      allowDifferentEmails: false,
+    },
+  },
   trustedOrigins: config.CORS_ORIGINS,
 })
