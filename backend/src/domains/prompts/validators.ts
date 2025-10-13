@@ -20,8 +20,24 @@ const promptSchema = z.object({
   agent: objectIdSchema,
   systemPrompt: z.string().trim(),
   tags: z.array(tagItemSchema),
+  version: z.number().int().positive(),
   createdAt: dateSchema,
   updatedAt: dateSchema,
+})
+
+const promptRevisionSchema = z.object({
+  _id: objectIdSchema,
+  promptId: objectIdSchema,
+  version: z.number().int().positive(),
+  systemPrompt: z.string().trim(),
+  tags: z.array(tagItemSchema),
+  createdAt: dateSchema,
+  updatedAt: dateSchema,
+})
+
+const promptVersionParamsSchema = z.object({
+  id: objectIdSchema,
+  version: z.coerce.number().int().positive(),
 })
 
 export const promptUpdateSchema = z
@@ -90,7 +106,39 @@ export const deletePromptRequest = {
   },
 }
 
+export const getPromptHistoryRequest = {
+  params: promptIdParamSchema,
+  useResponse: {
+    200: z.array(promptRevisionSchema),
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+}
+
+export const getPromptVersionRequest = {
+  params: promptVersionParamsSchema,
+  useResponse: {
+    200: promptRevisionSchema,
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+}
+
+export const restorePromptVersionRequest = {
+  params: promptVersionParamsSchema,
+  useResponse: {
+    200: promptSchema,
+    400: errorSchema,
+    404: errorSchema,
+    500: errorSchema,
+  },
+}
+
 export type PromptListQuery = z.infer<typeof promptListQuerySchema>
 export type PromptCreateInput = z.infer<typeof promptCreateSchema>
 export type PromptUpdateInput = z.infer<typeof promptUpdateSchema>
 export type PromptIdParams = z.infer<typeof promptIdParamSchema>
+export type PromptVersionParams = z.infer<typeof promptVersionParamsSchema>
+export type PromptRevisionResponse = z.infer<typeof promptRevisionSchema>

@@ -1,6 +1,11 @@
 import Agent, { type AgentDocument } from '@/domains/agents/model'
 
-import Prompt, { type PromptDocument } from './model'
+import Prompt, {
+  PromptRevision,
+  type PromptDocument,
+  type PromptRevisionDocument,
+  softDeletePromptById,
+} from './model'
 import type { PromptCreateInput, PromptUpdateInput } from './validators'
 import { normalizeTags } from '@/lib/tags'
 
@@ -24,6 +29,77 @@ export async function listPrompts(agentId?: string): Promise<PromptDocument[]> {
 export async function findPromptById(id: string): Promise<PromptDocument | null> {
   const prompt = await Prompt.findOne({ _id: id, ...ACTIVE_PROMPT_FILTER }).lean()
   return prompt as PromptDocument | null
+}
+
+async function findActivePrompt(promptId: string): Promise<PromptDocument | null> {
+  const prompt = await Prompt.findOne({ _id: promptId, ...ACTIVE_PROMPT_FILTER }).lean()
+  return prompt as PromptDocument | null
+}
+
+export type GetPromptHistoryResult =
+  | { status: 'PROMPT_NOT_FOUND' }
+  | { status: 'SUCCESS'; revisions: PromptRevisionDocument[] }
+
+export async function getPromptHistory(promptId: string): Promise<GetPromptHistoryResult> {
+  const prompt = await findActivePrompt(promptId)
+  if (!prompt) {
+    return { status: 'PROMPT_NOT_FOUND' }
+  }
+  const revisions = await PromptRevision.find({ promptId }).sort({ version: -1 }).lean()
+  return { status: 'SUCCESS', revisions: revisions as PromptRevisionDocument[] }
+}
+
+export type GetPromptVersionResult =
+  | { status: 'PROMPT_NOT_FOUND' }
+  | { status: 'VERSION_NOT_FOUND' }
+  | { status: 'SUCCESS'; revision: PromptRevisionDocument }
+
+export async function getPromptVersion(
+  promptId: string,
+  version: number
+): Promise<GetPromptVersionResult> {
+  const prompt = await findActivePrompt(promptId)
+  if (!prompt) {
+    return { status: 'PROMPT_NOT_FOUND' }
+  }
+  const revision = await PromptRevision.findOne({ promptId, version }).lean()
+  if (!revision) {
+    return { status: 'VERSION_NOT_FOUND' }
+  }
+  return { status: 'SUCCESS', revision: revision as PromptRevisionDocument }
+}
+
+export async function restorePromptVersion(
+  promptId: string,
+  version: number
+): Promise<{ status: 'NOT_FOUND' } | { status: 'SUCCESS'; prompt: PromptDocument }> {
+  const prompt = await Prompt.findOne({ _id: promptId, ...ACTIVE_PROMPT_FILTER })
+  if (!prompt) {
+    return { status: 'NOT_FOUND' }
+  }
+
+  const revision = await PromptRevision.findOne({ promptId, version })
+
+  if (!revision) {
+    return { status: 'NOT_FOUND' }
+  }
+
+  const updatedPrompt = await Prompt.findOneAndUpdate(
+    { _id: promptId, ...ACTIVE_PROMPT_FILTER },
+    {
+      $set: {
+        systemPrompt: revision.systemPrompt,
+        tags: revision.tags,
+      },
+    },
+    { new: true, runValidators: true }
+  )
+
+  if (!updatedPrompt) {
+    return { status: 'NOT_FOUND' }
+  }
+
+  return { status: 'SUCCESS', prompt: updatedPrompt as PromptDocument }
 }
 
 export type CreatePromptResult =
@@ -52,20 +128,24 @@ export type UpdatePromptResult =
   | { status: 'SUCCESS'; agent: AgentDocument | null; prompt: PromptDocument }
 
 export async function updatePrompt(id: string, data: PromptUpdateInput): Promise<UpdatePromptResult> {
-  const updateData: Record<string, unknown> = {}
+  const updateFields: Record<string, unknown> = {}
 
   if (data.systemPrompt !== undefined) {
-    updateData.systemPrompt = data.systemPrompt
+    updateFields.systemPrompt = data.systemPrompt
   }
 
   if (data.tags !== undefined) {
-    updateData.tags = normalizeTags(data.tags)
+    updateFields.tags = normalizeTags(data.tags)
   }
 
-  const prompt = await Prompt.findOneAndUpdate({ _id: id, ...ACTIVE_PROMPT_FILTER }, updateData, {
-    new: true,
-    runValidators: true,
-  })
+  const prompt = await Prompt.findOneAndUpdate(
+    { _id: id, ...ACTIVE_PROMPT_FILTER },
+    { $set: updateFields },
+    {
+      new: true,
+      runValidators: true,
+    }
+  )
 
   if (!prompt) {
     return { status: 'PROMPT_NOT_FOUND' }
@@ -78,16 +158,12 @@ export async function updatePrompt(id: string, data: PromptUpdateInput): Promise
 export type DeletePromptResult = { status: 'PROMPT_NOT_FOUND' } | { status: 'SUCCESS'; agent: AgentDocument | null }
 
 export async function deletePrompt(id: string): Promise<DeletePromptResult> {
-  const prompt = await Prompt.findOne({ _id: id, ...ACTIVE_PROMPT_FILTER })
+  const updatedPrompt = await softDeletePromptById(id)
 
-  if (!prompt) {
+  if (!updatedPrompt) {
     return { status: 'PROMPT_NOT_FOUND' }
   }
 
-  const agentId = prompt.agent
-
-  await Prompt.updateOne({ _id: prompt._id }, { $set: { deletedAt: new Date() } }).lean()
-
-  const updatedAgent = await Agent.findById(agentId)
+  const updatedAgent = await Agent.findById(updatedPrompt.agent)
   return { status: 'SUCCESS', agent: updatedAgent as AgentDocument | null }
 }
