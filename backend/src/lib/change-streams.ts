@@ -10,9 +10,9 @@ import type {
 import type { Types } from 'mongoose'
 import type { Server as SocketIOServer, Socket } from 'socket.io'
 
-import Agent, { type PopulatedAgent } from '@/domains/agents/model'
-import Prompt from '@/domains/prompts/model'
-import { findAgentById, toAgentPayload } from '@/domains/agents/service'
+import Agent from '@/domains/agents/models/agent'
+import Prompt from '@/domains/prompts/models/prompt'
+import { findAgentById } from '@/domains/agents/service'
 import registerAgentSocketHandlers from '@/domains/agents/socket-handlers'
 import registerPromptSocketHandlers from '@/domains/prompts/socket-handlers'
 import type { AgentChangedEvent, AgentDeletedEvent, AgentPayload } from '@/types'
@@ -44,7 +44,7 @@ async function fetchSerializedAgent(agentId: Types.ObjectId | string): Promise<A
     if (!agent) {
       return null
     }
-    return toAgentPayload(agent)
+    return agent
   } catch (error) {
     console.error(`${logPrefix} Error fetching agent:`, error)
     return null

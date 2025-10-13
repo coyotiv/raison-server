@@ -1,34 +1,31 @@
-import Agent, { type AgentDocument } from '@/domains/agents/model'
+import type { FilterQuery } from 'mongoose'
 
-import Prompt, { type PromptDocument } from './model'
-import type { PromptCreateInput, PromptUpdateInput } from './validators'
+import { Agent, type IAgent } from '@/domains/agents/models/agent'
 import { normalizeTags } from '@/lib/tags'
+
+import Prompt, { type IPrompt } from './models/prompt'
+import type { PromptCreateInput, PromptUpdateInput } from './validators'
 
 const ACTIVE_PROMPT_FILTER = { deletedAt: null }
 
-function buildPromptFilter(agentId?: string) {
-  const filter: Record<string, unknown> = { ...ACTIVE_PROMPT_FILTER }
-
-  if (agentId !== undefined) {
+export async function listPrompts(agentId?: string): Promise<IPrompt[]> {
+  const filter: FilterQuery<IPrompt> = { ...ACTIVE_PROMPT_FILTER }
+  if (agentId) {
     filter.agent = agentId
   }
 
-  return filter
+  const prompts = await Prompt.find(filter).sort({ createdAt: -1 }).lean()
+
+  return prompts
 }
 
-export async function listPrompts(agentId?: string): Promise<PromptDocument[]> {
-  const prompts = await Prompt.find(buildPromptFilter(agentId)).sort({ createdAt: -1 }).lean()
-  return prompts as PromptDocument[]
-}
-
-export async function findPromptById(id: string): Promise<PromptDocument | null> {
+export async function findPromptById(id: string): Promise<IPrompt | null> {
   const prompt = await Prompt.findOne({ _id: id, ...ACTIVE_PROMPT_FILTER }).lean()
-  return prompt as PromptDocument | null
+
+  return prompt
 }
 
-export type CreatePromptResult =
-  | { status: 'AGENT_NOT_FOUND' }
-  | { status: 'SUCCESS'; agent: AgentDocument; prompt: PromptDocument }
+export type CreatePromptResult = { status: 'AGENT_NOT_FOUND' } | { status: 'SUCCESS'; agent: IAgent; prompt: IPrompt }
 
 export async function createPrompt(data: PromptCreateInput): Promise<CreatePromptResult> {
   const agent = await Agent.findOne({ _id: data.agentId, deletedAt: null })
@@ -42,14 +39,13 @@ export async function createPrompt(data: PromptCreateInput): Promise<CreatePromp
     systemPrompt: data.systemPrompt,
     tags: normalizeTags(data.tags),
   })
-  const updatedAgent = await Agent.findById(agent._id)
 
-  return { status: 'SUCCESS', agent: updatedAgent as AgentDocument, prompt: createdPrompt as PromptDocument }
+  return { status: 'SUCCESS', agent, prompt: createdPrompt }
 }
 
 export type UpdatePromptResult =
   | { status: 'PROMPT_NOT_FOUND' }
-  | { status: 'SUCCESS'; agent: AgentDocument | null; prompt: PromptDocument }
+  | { status: 'SUCCESS'; agent: IAgent | null; prompt: IPrompt }
 
 export async function updatePrompt(id: string, data: PromptUpdateInput): Promise<UpdatePromptResult> {
   const updateData: Record<string, unknown> = {}
@@ -75,7 +71,7 @@ export async function updatePrompt(id: string, data: PromptUpdateInput): Promise
   return { status: 'SUCCESS', agent: updatedAgent, prompt: prompt }
 }
 
-export type DeletePromptResult = { status: 'PROMPT_NOT_FOUND' } | { status: 'SUCCESS'; agent: AgentDocument | null }
+export type DeletePromptResult = { status: 'PROMPT_NOT_FOUND' } | { status: 'SUCCESS'; agent: IAgent | null }
 
 export async function deletePrompt(id: string): Promise<DeletePromptResult> {
   const prompt = await Prompt.findOne({ _id: id, ...ACTIVE_PROMPT_FILTER })
@@ -89,5 +85,5 @@ export async function deletePrompt(id: string): Promise<DeletePromptResult> {
   await Prompt.updateOne({ _id: prompt._id }, { $set: { deletedAt: new Date() } }).lean()
 
   const updatedAgent = await Agent.findById(agentId)
-  return { status: 'SUCCESS', agent: updatedAgent as AgentDocument | null }
+  return { status: 'SUCCESS', agent: updatedAgent as IAgent | null }
 }

@@ -1,13 +1,10 @@
 import type { Types } from 'mongoose'
 
-import type { Prompt } from './domains/prompts/model'
-
 type ID = Types.ObjectId | string
 
 export type AgentPayload = {
   _id: ID
   name: string
-  prompts?: Prompt[]
   systemPrompt?: string | null
 }
 
