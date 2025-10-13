@@ -3,17 +3,11 @@ import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { apiKey, organization } from 'better-auth/plugins'
 import { MongoClient } from 'mongodb'
 
-// import { ensureOrganizationCollections } from './ensure-organization-collections'
-
 import config from '@/config'
 import { sendEmail } from '@/lib/email/service'
 
 const client = new MongoClient(config.MONGODB_CONNECTION_STRING)
 const database = client.db()
-
-// ensureOrganizationCollections(database).catch((error: unknown) => {
-//   console.error('Failed to ensure organization collections', error)
-// })
 
 export const auth = betterAuth({
   appName: 'Raison',
