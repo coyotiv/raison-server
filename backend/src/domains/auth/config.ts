@@ -53,6 +53,28 @@ export const auth = betterAuth({
       })
     },
   },
+  databaseHooks: {
+    session: {
+      create: {
+        before: async session => {
+          const member = await database.collection('member').findOne({ userId: session.userId })
+
+          if (member) {
+            return {
+              data: {
+                ...session,
+                activeOrganizationId: member.organizationId,
+              },
+            }
+          }
+
+          return {
+            data: session,
+          }
+        },
+      },
+    },
+  },
   socialProviders: {
     google: {
       enabled: true,
