@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach } from '@jest/globals'
 import mongoose from 'mongoose'
 import { api } from './setup'
 
-async function createAgent(payload?: { name?: string; prompts?: Array<{ systemPrompt: string; version?: string }> }) {
+const SYSTEM_PROMPT = 'You are a helpful assistant.'
+
+async function createAgent(payload?: { name?: string; prompt?: { systemPrompt: string; version?: string } }) {
   const body = {
     name: payload?.name ?? 'Test Agent',
-    prompts: payload?.prompts ?? [
-      {
-        systemPrompt: 'You are a helpful assistant.',
-      },
-    ],
+    prompt: payload?.prompt ?? {
+      systemPrompt: SYSTEM_PROMPT,
+    },
   }
 
   const res = await api.post('/agents').send(body)
@@ -27,13 +27,9 @@ describe('Agents API', () => {
       const { status, body } = await createAgent()
 
       expect(status).toBe(201)
-      console.log('TEST body createAgent', body)
       expect(body).toHaveProperty('_id')
       expect(body).toHaveProperty('name', 'Test Agent')
-      expect(body).toHaveProperty('systemPrompt', 'You are a helpful assistant.')
-      expect(Array.isArray(body.prompts)).toBe(true)
-      expect(body.prompts.length).toBe(1)
-      expect(body.prompts[0]).toHaveProperty('systemPrompt', 'You are a helpful assistant.')
+      expect(body).toHaveProperty('systemPrompt', SYSTEM_PROMPT)
     })
 
     it('returns 400 when validation fails (missing name and prompts empty)', async () => {
@@ -62,9 +58,9 @@ describe('Agents API', () => {
       expect(body.length).toBe(2)
       const names = (body as Array<{ name: string }>).map(a => a.name).sort()
       expect(names).toEqual(['A1', 'A2'])
-      ;(body as Array<{ systemPrompt?: string }>).forEach(agent => {
-        expect(agent).toHaveProperty('systemPrompt', 'You are a helpful assistant.')
-      })
+      for (const agent of body) {
+        expect(agent).toHaveProperty('systemPrompt', SYSTEM_PROMPT)
+      }
     })
 
     it('returns 400 on invalid query (tag provided as array)', async () => {
@@ -83,7 +79,7 @@ describe('Agents API', () => {
       expect(status).toBe(200)
       expect(body).toHaveProperty('_id', id)
       expect(body).toHaveProperty('name')
-      expect(body).toHaveProperty('systemPrompt', 'You are a helpful assistant.')
+      expect(body).toHaveProperty('systemPrompt', SYSTEM_PROMPT)
     })
 
     it('returns 404 when the agent does not exist', async () => {
@@ -107,15 +103,14 @@ describe('Agents API', () => {
 
       const updatePayload = {
         name: 'Updated Name',
-        prompts: [{ systemPrompt: 'P1' }, { systemPrompt: 'P2' }],
+        prompt: { systemPrompt: 'P1' },
       }
 
       const { status, body } = await api.put(`/agents/${id}`).send(updatePayload)
       expect(status).toBe(200)
       expect(body).toHaveProperty('_id', id)
       expect(body).toHaveProperty('name', 'Updated Name')
-      expect(Array.isArray(body.prompts)).toBe(true)
-      expect(body.prompts.length).toBe(2)
+      expect(body).toHaveProperty('systemPrompt', 'P1')
     })
 
     it('returns 404 when updating a non-existing agent', async () => {
@@ -125,30 +120,24 @@ describe('Agents API', () => {
       expect(body).toHaveProperty('message')
     })
 
-      it('returns 400 when validation fails (missing name)', async () => {
-        const created = await createAgent()
-        const id = created.body._id
-        const { status, body } = await api.put(`/agents/${id}`).send({})
-        expect(status).toBe(400)
-        expect(body).toHaveProperty('message')
-      })
+    it('returns 400 when validation fails (missing name)', async () => {
+      const created = await createAgent()
+      const id = created.body._id
+      const { status, body } = await api.put(`/agents/${id}`).send({})
+      expect(status).toBe(400)
+      expect(body).toHaveProperty('message')
+    })
   })
 
   describe('POST /agents/:id/prompts', () => {
     it('appends a prompt and returns 200', async () => {
-      const created = await createAgent({ prompts: [{ systemPrompt: 'Initial' }] })
+      const created = await createAgent({ prompt: { systemPrompt: 'Initial' } })
       const id = created.body._id
 
-      const { status, body } = await api
-        .post(`/agents/${id}/prompts`)
-        .send({ systemPrompt: 'Additional prompt' })
+      const { status, body } = await api.post(`/agents/${id}/prompts`).send({ systemPrompt: 'Additional prompt' })
 
       expect(status).toBe(200)
       expect(body).toHaveProperty('_id', id)
-      expect(Array.isArray(body.prompts)).toBe(true)
-      expect(body.prompts.length).toBe(2)
-      const promptsTexts = (body.prompts as Array<{ systemPrompt: string }>).map(p => p.systemPrompt)
-      expect(promptsTexts).toEqual(expect.arrayContaining(['Initial', 'Additional prompt']))
       expect(body).toHaveProperty('systemPrompt', 'Additional prompt')
     })
 

@@ -2,8 +2,8 @@
 import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 
-import Agent, { type AgentDocument } from '@/domains/agents/model'
-import Prompt from '@/domains/prompts/model'
+import Agent, { type IAgent } from '@/domains/agents/models/agent'
+import Prompt from '@/domains/prompts/models/prompt'
 import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
 
 type SeedPrompt = {
@@ -55,17 +55,15 @@ function resolveTags(prompt: SeedPrompt, index: number): string[] {
   const normalized = prompt.tags ? normalizeTags(prompt.tags, { allowEmpty }) : allowEmpty ? [] : [DEFAULT_PROMPT_TAG]
 
   if (allowEmpty) {
-    return uniqueTags(normalized.filter((tag) => tag !== DEFAULT_PROMPT_TAG))
+    return uniqueTags(normalized.filter(tag => tag !== DEFAULT_PROMPT_TAG))
   }
 
-  const withDefault = normalized.includes(DEFAULT_PROMPT_TAG)
-    ? normalized
-    : [DEFAULT_PROMPT_TAG, ...normalized]
+  const withDefault = normalized.includes(DEFAULT_PROMPT_TAG) ? normalized : [DEFAULT_PROMPT_TAG, ...normalized]
 
   return uniqueTags(withDefault)
 }
 
-function serializePrompt(prompt: SeedPrompt, agentId: AgentDocument['_id'], index: number) {
+function serializePrompt(prompt: SeedPrompt, agentId: IAgent['_id'], index: number) {
   return {
     agent: agentId,
     systemPrompt: prompt.systemPrompt,
@@ -136,9 +134,7 @@ export async function seedFromFile(filePath: string): Promise<{ ok: boolean }> {
       .map((prompt: SeedPrompt, index: number) => serializePrompt(prompt, agent._id, index))
 
     if (prompts.length) {
-      const createdPrompts = await Prompt.insertMany(prompts, { ordered: true })
-      agent.prompts = createdPrompts.map((prompt) => prompt._id)
-      await agent.save()
+      await Prompt.insertMany(prompts, { ordered: true })
     }
   }
 

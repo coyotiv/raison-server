@@ -5,14 +5,11 @@ const errorSchema = z.object({
   message: z.string().trim().min(1, 'Message is required'),
 })
 
-const agentBaseSchema = z.object({
-  name: z.string().trim().min(1, 'Agent name is required'),
-})
-
 const agentPromptArraySchema = z.array(promptContentSchema).min(1, 'At least one prompt is required')
 
-export const agentCreateSchema = agentBaseSchema.extend({
-  prompts: agentPromptArraySchema,
+export const agentCreateSchema = z.object({
+  name: z.string().trim().min(1, 'Agent name is required'),
+  prompt: promptContentSchema,
 })
 
 export const agentIdParamSchema = z.object({
@@ -27,17 +24,22 @@ export const agentTagsQuerySchema = z.object({
   tag: z.string().trim().optional(),
 })
 
-export const agentSchema = agentBaseSchema.extend({
+export const agentSchema = z.object({
   _id: objectIdSchema,
-  prompts: agentPromptArraySchema,
+  name: z.string().trim().min(1, 'Agent name is required'),
+  systemPrompt: z.string().trim().nullish(),
   createdAt: dateSchema,
   updatedAt: dateSchema,
-  systemPrompt: z.string().trim().nullish(),
 })
 
-export const agentUpdateSchema = agentBaseSchema.extend({
-  prompts: agentPromptArraySchema.optional(),
-})
+export const agentUpdateSchema = z
+  .object({
+    name: z.string().optional(),
+    prompt: promptContentSchema.optional(),
+  })
+  .refine(data => data.name !== undefined || data.prompt !== undefined, {
+    message: 'At least one field must be provided',
+  })
 
 export const agentPromptCreateSchema = promptContentSchema
 

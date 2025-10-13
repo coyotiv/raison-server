@@ -3,7 +3,7 @@ import type { Socket } from 'socket.io'
 import { formatZodError } from '@/lib/error-handler'
 
 import { agentNameParamSchema, agentTagsQuerySchema } from './validators'
-import { listAgents, findAgentByName, toAgentPayload } from './service'
+import { listAgents, findAgentByName } from './service'
 import { respondWithError, respondWithSuccess, formatUnknownError } from '../shared/socket'
 
 function registerAgentSocketHandlers(socket: Socket): void {
@@ -16,7 +16,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
       }
 
       const agents = await listAgents(parsedQuery.data.tag)
-      respondWithSuccess(callback, agents.map(toAgentPayload))
+      respondWithSuccess(callback, agents)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to list agents'))
     }
@@ -37,7 +37,7 @@ function registerAgentSocketHandlers(socket: Socket): void {
         return
       }
 
-      respondWithSuccess(callback, toAgentPayload(agent))
+      respondWithSuccess(callback, agent)
     } catch (error) {
       respondWithError(callback, formatUnknownError(error, 'Failed to fetch agent by name'))
     }
