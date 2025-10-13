@@ -1,0 +1,105 @@
+erDiagram
+    User ||--o{ Organization : "creates/owns"
+    Organization ||--o{ Team : "has"
+
+    Team ||--o{ TeamMember : "has members"
+    TeamMember }o--|| User : "refers to"
+
+    Team ||--o{ Agent : "owns"
+    Team ||--o{ Environment : "has"
+
+    TeamMember ||--o{ Agent : "creates"
+    TeamMember ||--o{ Environment : "creates"
+    TeamMember ||--o{ PromptVersion : "publishes"
+
+    Agent ||--o{ Prompt : "contains"
+    Prompt ||--o{ PromptVersion : "has versions"
+
+    Environment ||--o{ PromptVersion : "deployed versions"
+
+    User {
+        ObjectId _id PK
+        string email UK
+        string name "Display name"
+        Date createdAt
+        Date updatedAt
+        Date deletedAt
+    }
+
+    Organization {
+        ObjectId _id PK
+        ObjectId owner FK "User who created it"
+        string name "Organization name"
+        string slug UK
+        Date createdAt
+        Date updatedAt
+        Date deletedAt
+    }
+
+    Team {
+        ObjectId _id PK
+        ObjectId organization FK
+        string name "Team name"
+        string slug UK "Unique within org"
+        Date createdAt
+        Date updatedAt
+        Date deletedAt
+    }
+
+    TeamMember {
+        ObjectId _id PK
+        ObjectId team FK
+        ObjectId user FK "Member user"
+        enum role "admin member viewer"
+        Date joinedAt
+        ObjectId invitedBy FK
+    }
+
+    Environment {
+        ObjectId _id PK
+        ObjectId team FK
+        ObjectId createdBy FK "TeamMember who created"
+        string name "Development Staging Production"
+        string description
+        Date createdAt
+        Date updatedAt
+    }
+
+    Agent {
+        ObjectId _id PK
+        ObjectId team FK "Belongs to team"
+        ObjectId createdBy FK "TeamMember who created"
+        string name "Agent name"
+        string slug UK "Unique within team"
+        string description
+        json metadata
+        Date createdAt
+        Date updatedAt
+        Date deletedAt
+    }
+
+    Prompt {
+        ObjectId _id PK
+        ObjectId agent FK "Parent agent"
+        string name UK "Unique within agent"
+        string description
+        json metadata
+        Date createdAt
+        Date updatedAt
+        Date deletedAt
+    }
+
+    PromptVersion {
+        ObjectId _id PK
+        ObjectId prompt FK "Parent prompt"
+        text systemPrompt "ACTUAL PROMPT TEXT"
+        int version UK "Auto-increment per prompt"
+        enum state "draft or published"
+        Date publishedAt "Null for drafts"
+        ObjectId publishedBy FK "Team member who published"
+        ObjectId environment FK "Null for drafts"
+        json metadata
+        Date createdAt
+        Date updatedAt
+        Date deletedAt
+    }
