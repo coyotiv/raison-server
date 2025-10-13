@@ -3,6 +3,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "rootDir": "./",
     "outDir": "./dist",
     "esModuleInterop": true,
@@ -21,6 +22,6 @@
     "resolveFullExtension": ".js"
   },
   "typeRoots": ["./types", "./node_modules/@types"],
-  "include": ["src/**/*.ts", "types/**/*.d.ts", "bin/www"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "types/**/*.d.ts", "bin/www"],
   "exclude": ["node_modules", "dist", "coverage", "__tests__"]
 }

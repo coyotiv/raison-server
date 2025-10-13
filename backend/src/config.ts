@@ -13,6 +13,7 @@ const configSchema = z.object({
   BETTER_AUTH_SECRET: z.string().default('test-secret'),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  RESEND_API_KEY: z.string().optional(),
 })
 
 const config = configSchema.parse(process.env)

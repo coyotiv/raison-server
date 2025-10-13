@@ -6,6 +6,7 @@ import { MongoClient } from 'mongodb'
 // import { ensureOrganizationCollections } from './ensure-organization-collections'
 
 import config from '@/config'
+import { sendEmail } from '@/lib/email/service'
 
 const client = new MongoClient(config.MONGODB_CONNECTION_STRING)
 const database = client.db()
@@ -24,10 +25,39 @@ export const auth = betterAuth({
         enabled: false,
       },
     }),
-    organization(),
+    organization({
+      cancelPendingInvitationsOnReInvite: true,
+      invitationLimit: 1,
+      teams: {
+        enabled: true,
+        maximumTeams: 10,
+        allowRemovingAllTeams: false,
+        defaultTeam: {
+          enabled: true,
+          name: 'Default Team',
+        },
+      },
+    }),
   ],
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: 'Please verify your email address',
+        template: 'emailVerification',
+        props: {
+          verifyUrl: url,
+          user: {
+            name: user.name,
+          },
+        },
+      })
+    },
   },
   socialProviders: {
     google: {
