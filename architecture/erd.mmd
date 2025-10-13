@@ -1,18 +1,25 @@
 erDiagram
     User ||--o{ Organization : "creates/owns"
+
+    Organization ||--o{ APIKey : "has"
     Organization ||--o{ Team : "has"
+    Organization ||--o{ Prompt: "contains"
 
+    Team ||--o{ APIKey : "has"
     Team ||--o{ TeamMember : "has members"
-    TeamMember }o--|| User : "refers to"
-
     Team ||--o{ Agent : "owns"
     Team ||--o{ Environment : "has"
+    Team ||--o{ Prompt: "contains"
 
+    TeamMember ||--o{ APIKey : "has"
+    TeamMember }o--|| User : "refers to"
     TeamMember ||--o{ Agent : "creates"
     TeamMember ||--o{ Environment : "creates"
     TeamMember ||--o{ PromptVersion : "publishes"
+    TeamMember ||--o{ Invitation : "has"
 
     Agent ||--o{ Prompt : "contains"
+
     Prompt ||--o{ PromptVersion : "has versions"
 
     Environment ||--o{ PromptVersion : "deployed versions"
@@ -34,6 +41,31 @@ erDiagram
         Date createdAt
         Date updatedAt
         Date deletedAt
+    }
+
+
+    APIKey {
+        string id PK "The ID of the API key."
+        string name "The name of the API key."
+        string start "The starting characters of the API key. Useful for showing the first few characters only."
+        string prefix "The API Key prefix. Stored as plain text."
+        string key "The hashed API key itself."
+        string userId FK "The ID of the user associated with the API key."
+        number refillInterval "The interval to refill the key in milliseconds."
+        number refillAmount "The amount to refill the remaining count of the key."
+        Date lastRefillAt "The date and time when the key was last refilled."
+        boolean enabled "Whether the API key is enabled."
+        boolean rateLimitEnabled "Whether the API key has rate limiting enabled."
+        number rateLimitTimeWindow "The time window in milliseconds for the rate limit."
+        number rateLimitMax "The maximum number of requests allowed within the rateLimitTimeWindow."
+        number requestCount "The number of requests made within the rate limit time window."
+        number remaining "The number of requests remaining."
+        Date lastRequest "The date and time of the last request made to the key."
+        Date expiresAt "The date and time when the key will expire."
+        Date createdAt "The date and time the API key was created."
+        Date updatedAt "The date and time the API key was updated."
+        string permissions "The permissions of the key."
+        Object metadata "Any additional metadata you want to store with the key."
     }
 
     Team {
@@ -80,7 +112,7 @@ erDiagram
 
     Prompt {
         ObjectId _id PK
-        ObjectId agent FK "Parent agent"
+        json owner "{_id: ObjectId, type: 'agent' | 'team' | 'organization'}"
         string name UK "Unique within agent"
         string description
         json metadata
@@ -102,4 +134,14 @@ erDiagram
         Date createdAt
         Date updatedAt
         Date deletedAt
+    }
+
+    Invitation {
+        string id PK "Unique identifier for each invitation"
+        string email "The email address of the user"
+        string inviterId FK "The ID of the inviter"
+        string organizationId FK "The ID of the organization"
+        string role "The role of the user in the organization"
+        string status "The status of the invitation"
+        Date expiresAt "Timestamp of when the invitation expires"
     }
