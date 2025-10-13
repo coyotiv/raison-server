@@ -1,11 +1,11 @@
-import { createAuthClient } from 'better-auth/client'
-import { apiKeyClient, organizationClient } from 'better-auth/client/plugins'
-
-const baseURL = import.meta.env.VITE_BETTER_AUTH_URL ?? '/api/auth'
+import { apiKeyClient, organizationClient } from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
+import { API_BASE_URL } from "~/lib/request";
 
 export const authClient = createAuthClient({
-  baseURL,
-  plugins: [apiKeyClient(), organizationClient()],
-})
-
-export const { apiKey, organization } = authClient
+  baseURL: `${API_BASE_URL}/api/auth`,
+  plugins: [organizationClient(), apiKeyClient()],
+  fetchOptions: {
+    credentials: "include",
+  },
+});

@@ -1,48 +1,129 @@
-# frontend
+# Raison Platform
 
-This template should help get you started developing with Vue 3 in Vite.
+A React + TypeScript + Vite application with authentication and organization management.
 
-## Recommended IDE Setup
+## Getting Started
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
+```bash
+# Install dependencies
 npm install
-```
 
-### Compile and Hot-Reload for Development
-
-```sh
+# Run development server
 npm run dev
-```
 
-### Type-Check, Compile and Minify for Production
-
-```sh
+# Build for production
 npm run build
-```
 
-### Lint with [ESLint](https://eslint.org/)
+# Preview production build
+npm run preview
 
-```sh
+# Lint code
 npm run lint
 ```
+
+## Project Structure
+
+```
+src/
+├── components/      # Reusable UI components
+│   └── ui/          # shadcn/ui components
+├── modules/         # Feature modules
+│   ├── auth/        # Authentication (login, register, etc.)
+│   ├── onboarding/  # User onboarding flow
+│   └── organization/# Organization management
+├── layouts/         # Layout components
+├── providers/       # React context providers
+├── stores/          # Zustand state management
+├── hooks/           # Custom React hooks
+├── lib/             # Utilities and configurations
+│   ├── auth-client.ts   # Better Auth client
+│   ├── query-client.ts  # React Query setup
+│   └── request.ts       # Axios configuration
+└── main.tsx         # Application entry point
+```
+
+## Module Structure
+
+Each module follows a consistent pattern:
+
+```
+modules/[feature]/
+├── components/      # Feature-specific components
+├── routes/          # Route components for pages
+├── hooks.ts         # Custom hooks (queries, mutations)
+├── schema.ts        # Zod validation schemas
+└── types.ts         # TypeScript types and interfaces
+```
+
+**Example: Auth Module**
+- `components/` - Login, register, forgot password forms
+- `routes/` - Page components for each auth flow
+- `hooks.ts` - useLogin, useRegister, useVerifyEmail mutations
+- `schema.ts` - Form validation schemas
+- `types.ts` - Auth-related type definitions
+
+## Auth Provider
+
+The `AuthProvider` wraps the entire app and handles authentication flow:
+
+1. **Session Check** - Fetches user session and organizations on mount
+2. **Route Guards** - Automatically redirects based on auth state:
+   - No user → `/auth/login`
+   - User with no org → `/onboarding`
+   - User with org but no active org → `/select-organization`
+   - User with active org → Protected routes
+3. **Context** - Provides `user` and `session` to all components via `useAuthContext()`
+
+## Layouts
+
+The application uses three main layouts:
+
+### BrandedLayout (`/auth/*` and `/onboarding/*`)
+A beautiful split-screen layout featuring:
+- **Left Panel** (desktop only):
+  - Dark gradient background with animated glowing orbs
+  - Raison branding and tagline
+  - Key product features showcase:
+  - Copyright and legal links
+- **Right Panel**:
+  - Clean form presentation area
+  - "Switch account" button (onboarding only) for logging out during setup
+  - Responsive design - left panel hidden on mobile
+
+### AppLayout (`/*` protected routes)
+Main application layout with:
+- Collapsible sidebar navigation
+- Breadcrumb navigation
+- Content area for app pages
+
+## Routing Tree
+
+```
+/ (AuthProvider wrapper)
+├── /auth/* (BrandedLayout)    # Public auth routes
+│   ├── /login
+│   ├── /register
+│   ├── /forgot-password
+│   ├── /reset-password
+│   └── /verify-email
+├── /onboarding/* (BrandedLayout)  # User onboarding flow
+│   ├── /organization          # Create organization
+│   └── /invite-members        # Invite team members
+└── /* (AppLayout)             # Protected routes
+    ├── /                      # Home
+    ├── /settings
+    └── /agents
+```
+
+Routes are nested under `AuthProvider` which handles all authentication logic and redirects before any page renders.
+
+## Tech Stack
+
+- **React 19** with TypeScript
+- **Vite** (Rolldown) for build tooling
+- **TanStack Query** for server state
+- **Better Auth** for authentication
+- **Zustand** for client state
+- **React Router** for routing
+- **shadcn/ui** + **Tailwind CSS** for UI
+- **Biome** for linting

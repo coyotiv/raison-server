@@ -1,16 +1,21 @@
-import { fileURLToPath, URL } from 'node:url'
-
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
-import vuetify from 'vite-plugin-vuetify'
+import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), vueDevTools(), vuetify({ autoImport: true })],
+  plugins: [
+    react({
+      babel: {
+        plugins: [["babel-plugin-react-compiler"]],
+      },
+    }),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      "~": path.resolve(__dirname, "./src"),
     },
   },
-})
+});
