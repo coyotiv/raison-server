@@ -91,7 +91,7 @@ export function BillingPage() {
       </div>
 
       <div className="space-y-6">
-        <div className="flex flex-col gap-2 border-border border-b px-6 py-4">
+        <div className="flex flex-col gap-2 border-border border-y px-6 py-4">
           <h3 className="font-semibold text-lg">Payment Method</h3>
           <p className="text-muted-foreground text-sm">Manage your payment methods.</p>
         </div>

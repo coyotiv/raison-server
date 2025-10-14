@@ -1,5 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useEffect } from "react";
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-router";
 import { AppLayout } from "~/layouts/app-layout";
 import { BrandedLayout } from "~/layouts/branded-layout";
@@ -21,6 +22,7 @@ import { PreferencesPage } from "~/modules/settings/routes/preferences";
 import { ProfilePage } from "~/modules/settings/routes/profile";
 import { SettingsIndexPage, SettingsPage } from "~/modules/settings/routes/settings";
 import { AuthProvider } from "~/providers/auth-provider";
+import { useTheme } from "~/stores/app-store";
 
 const AuthProviderWrapper = () => {
   return (
@@ -90,6 +92,26 @@ const router = createBrowserRouter([
 ]);
 
 export const App = () => {
+  const [theme] = useTheme();
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+
+      root.classList.add(systemTheme);
+      return;
+    }
+
+    root.classList.add(theme);
+  }, [theme]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />

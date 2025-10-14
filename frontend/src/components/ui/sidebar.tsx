@@ -10,7 +10,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
-import { useAppStore } from "~/stores/app-store";
+import { useSidebarState } from "~/stores/app-store";
 
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
@@ -55,8 +55,7 @@ function SidebarProvider({
   const [openMobile, setOpenMobile] = React.useState(false);
 
   // Use the Zustand store for sidebar state
-  const isSidebarOpen = useAppStore((state) => state.isSidebarOpen);
-  const setIsSidebarOpen = useAppStore((state) => state.setIsSidebarOpen);
+  const [isSidebarOpen, setIsSidebarOpen] = useSidebarState();
 
   // Allow external control via props, otherwise use the store
   const open = openProp ?? isSidebarOpen;

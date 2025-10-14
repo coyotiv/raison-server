@@ -40,7 +40,7 @@ export function SidebarLayout({ title, description, navGroups }: SidebarLayoutPr
       {/* Content area with sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar using Shadcn components */}
-        <aside className="w-64 overflow-auto border-r bg-sidebar">
+        <aside className="w-64 overflow-auto border-r">
           <div className="space-y-2 p-4">
             {navGroups.map((group) => (
               <SidebarGroup key={group.label}>
