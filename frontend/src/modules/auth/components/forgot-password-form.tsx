@@ -5,30 +5,15 @@ import { Controller, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "~/components/ui/field";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { cn } from "~/lib/utils";
 import { useForgotPasswordMutation } from "~/modules/auth/hooks";
 import { ForgotPasswordSchema } from "~/modules/auth/schema";
 
-export function ForgotPasswordForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export function ForgotPasswordForm({ className, ...props }: React.ComponentProps<"div">) {
   const forgotPasswordMutation = useForgotPasswordMutation();
 
   const forgotPasswordForm = useForm({
@@ -40,17 +25,11 @@ export function ForgotPasswordForm({
   });
 
   return (
-    <div
-      className={cn("relative isolate flex flex-col gap-6", className)}
-      {...props}
-    >
+    <div className={cn("relative isolate flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Forgot password?</CardTitle>
-          <CardDescription>
-            Enter your email address and we'll send you a link to reset your
-            password
-          </CardDescription>
+          <CardDescription>Enter your email address and we'll send you a link to reset your password</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -64,36 +43,25 @@ export function ForgotPasswordForm({
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <p className="text-muted-foreground text-sm">
-                Check your email for a link to reset your password. If it
-                doesn't appear within a few minutes, check your spam folder.
+                Check your email for a link to reset your password. If it doesn't appear within a few minutes, check
+                your spam folder.
               </p>
               <Button asChild className="w-full">
                 <Link to="/auth/login">Return to login</Link>
               </Button>
             </div>
           ) : (
-            <form
-              onSubmit={forgotPasswordForm.handleSubmit((d) =>
-                forgotPasswordMutation.mutate(d)
-              )}
-            >
+            <form onSubmit={forgotPasswordForm.handleSubmit((d) => forgotPasswordMutation.mutate(d))}>
               <FieldGroup>
                 {forgotPasswordMutation.isError && (
                   <Alert variant="destructive">
                     <AlertCircle />
                     <AlertTitle>Failed to send reset link</AlertTitle>
-                    <AlertDescription>
-                      {forgotPasswordMutation.error?.message}
-                    </AlertDescription>
+                    <AlertDescription>{forgotPasswordMutation.error?.message}</AlertDescription>
                   </Alert>
                 )}
                 <Controller
@@ -102,31 +70,20 @@ export function ForgotPasswordForm({
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="email">Email</FieldLabel>
-                      <Input
-                        {...field}
-                        id="email"
-                        aria-invalid={fieldState.invalid}
-                        placeholder="m@example.com"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
+                      <Input {...field} id="email" aria-invalid={fieldState.invalid} placeholder="m@example.com" />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
                 />
 
                 <Field>
-                  <Button
-                    type="submit"
-                    disabled={forgotPasswordMutation.isPending}
-                  >
+                  <Button type="submit" disabled={forgotPasswordMutation.isPending}>
                     {forgotPasswordMutation.isPending && <Spinner />}
                     Send reset link
                   </Button>
 
                   <FieldDescription className="!mt-4 text-center text-xs">
-                    Remember your password?{" "}
-                    <Link to="/auth/login">Sign in</Link>
+                    Remember your password? <Link to="/auth/login">Sign in</Link>
                   </FieldDescription>
                 </Field>
               </FieldGroup>

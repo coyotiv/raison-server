@@ -73,10 +73,10 @@ export const useRegisterMutation = () => {
         throw new Error(res.error.message);
       }
 
-      return res;
+      return { ...res, email: payload.email };
     },
-    onSuccess: () => {
-      navigate("/auth/verify-email");
+    onSuccess: (data) => {
+      navigate(`/auth/check-email?email=${encodeURIComponent(data.email)}`);
     },
   });
 };

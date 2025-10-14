@@ -4,6 +4,7 @@ import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-rou
 import { AppLayout } from "~/layouts/app-layout";
 import { BrandedLayout } from "~/layouts/branded-layout";
 import { queryClient } from "~/lib/query-client";
+import { CheckEmailPage } from "~/modules/auth/routes/check-email.route";
 import { ForgotPasswordPage } from "~/modules/auth/routes/forgot-password.route";
 import { LoginPage } from "~/modules/auth/routes/login.route";
 import { RegisterPage } from "~/modules/auth/routes/register.route";
@@ -11,6 +12,14 @@ import { ResetPasswordPage } from "~/modules/auth/routes/reset-password.route";
 import { VerifyEmailPage } from "~/modules/auth/routes/verify-email.route";
 import { OnboardingMembersPage } from "~/modules/onboarding/routes/members";
 import { OnboardingOrganizationPage } from "~/modules/onboarding/routes/organization";
+import { BillingPage } from "~/modules/settings/routes/billing";
+import { GeneralPage } from "~/modules/settings/routes/general";
+import { IntegrationsPage } from "~/modules/settings/routes/integrations";
+import { MembersPage } from "~/modules/settings/routes/members";
+import { NotificationsPage } from "~/modules/settings/routes/notifications";
+import { PreferencesPage } from "~/modules/settings/routes/preferences";
+import { ProfilePage } from "~/modules/settings/routes/profile";
+import { SettingsIndexPage, SettingsPage } from "~/modules/settings/routes/settings";
 import { AuthProvider } from "~/providers/auth-provider";
 
 const AuthProviderWrapper = () => {
@@ -33,6 +42,7 @@ const router = createBrowserRouter([
           { path: "", element: <Navigate to="login" replace /> },
           { path: "login", element: <LoginPage /> },
           { path: "register", element: <RegisterPage /> },
+          { path: "check-email", element: <CheckEmailPage /> },
           { path: "forgot-password", element: <ForgotPasswordPage /> },
           { path: "reset-password", element: <ResetPasswordPage /> },
           { path: "verify-email", element: <VerifyEmailPage /> },
@@ -56,7 +66,20 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: "", element: <div>Home</div> },
-          { path: "settings", element: <div>Settings</div> },
+          {
+            path: "settings",
+            element: <SettingsPage />,
+            children: [
+              { path: "", element: <SettingsIndexPage /> },
+              { path: "profile", element: <ProfilePage /> },
+              { path: "preferences", element: <PreferencesPage /> },
+              { path: "notifications", element: <NotificationsPage /> },
+              { path: "general", element: <GeneralPage /> },
+              { path: "members", element: <MembersPage /> },
+              { path: "billing", element: <BillingPage /> },
+              { path: "integrations", element: <IntegrationsPage /> },
+            ],
+          },
           { path: "agents", element: <div>Agents</div> },
         ],
       },

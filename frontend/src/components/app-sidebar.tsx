@@ -1,23 +1,12 @@
 "use client";
 
-import {
-  AudioWaveform,
-  BarChart,
-  Bot,
-  Command,
-  FileText,
-  FlaskConical,
-  GalleryVerticalEnd,
-  LayoutDashboard,
-  Rocket,
-  SquareTerminal,
-} from "lucide-react";
+import { BarChart, Bot, FileText, FlaskConical, LayoutDashboard, Rocket, SquareTerminal } from "lucide-react";
 import type * as React from "react";
 
 import { NavMain } from "~/components/nav-main";
 import { NavProjects } from "~/components/nav-projects";
 import { NavUser } from "~/components/nav-user";
-import { TeamSwitcher } from "~/components/team-switcher";
+import { OrganizationSwitcher } from "~/components/organization-switcher";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "~/components/ui/sidebar";
 
 export type ProjectItem = { id: string; name: string; icon?: string };
@@ -57,31 +46,6 @@ const PROJECTS: ProjectItem[] = [
   { id: "travel", name: "Travel" },
 ];
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-};
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const primaryItems = SIDEBAR.filter((item) => !item.section);
   const secondaryItems = SIDEBAR.filter((item) => item.section === "secondary");
@@ -89,7 +53,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <OrganizationSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={primaryItems} />
@@ -97,7 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={secondaryItems} label="Resources" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
