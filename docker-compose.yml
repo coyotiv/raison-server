@@ -19,6 +19,7 @@ services:
     restart: unless-stopped
     ports:
       - "27017:27017"
+    attach: false
     volumes:
       - mongo-data:/data/db
     healthcheck:
