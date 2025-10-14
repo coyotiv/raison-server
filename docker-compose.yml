@@ -15,19 +15,22 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   mongo:
-    image: mongo:7
+    image: mongo:8.0.9
     restart: unless-stopped
     ports:
       - "27017:27017"
     attach: false
+    command:
+      ["--replSet", "rs", "--bind_ip_all", "--quiet", "--logpath", "/dev/null"]
+    healthcheck:
+      start_period: 0s
+      interval: 500ms
+      timeout: 5s
+      retries: 5
+      test: |
+        mongosh --eval "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs', members: [{ _id: 0, host: 'mongo:27017' }] }).ok }"
     volumes:
       - mongo-data:/data/db
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' | grep 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-      start_period: 5s
 
   backend:
     build:
@@ -38,7 +41,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
-      - MONGODB_CONNECTION_STRING=mongodb://mongo:27017
+      # - MONGODB_CONNECTION_STRING=mongodb://mongo:27017
       - CORS_ORIGINS=http://localhost,http://localhost:5173,http://api.localhost
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=1000
