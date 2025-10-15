@@ -6,8 +6,8 @@ import type * as React from "react";
 import { NavMain } from "~/components/nav-main";
 import { NavProjects } from "~/components/nav-projects";
 import { NavUser } from "~/components/nav-user";
-import { OrganizationSwitcher } from "~/components/organization-switcher";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "~/components/ui/sidebar";
+import { OrganizationSwitcher } from "~/modules/organization/components/organization-switcher";
 
 export type TeamItem = { id: string; name: string; icon?: string };
 

@@ -20,8 +20,6 @@ export const useSetActiveOrganizationMutation = () => {
 
       return res.data;
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY }),
   });
 };

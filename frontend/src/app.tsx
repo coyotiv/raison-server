@@ -5,6 +5,8 @@ import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-rou
 import { AppLayout } from "~/layouts/app-layout";
 import { BrandedLayout } from "~/layouts/branded-layout";
 import { queryClient } from "~/lib/query-client";
+import { AgentDetailPage } from "~/modules/agent/routes/agent-detail.route";
+import { AgentsPage } from "~/modules/agent/routes/agents.route";
 import { CheckEmailPage } from "~/modules/auth/routes/check-email.route";
 import { ForgotPasswordPage } from "~/modules/auth/routes/forgot-password.route";
 import { LoginPage } from "~/modules/auth/routes/login.route";
@@ -69,6 +71,13 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <div>Home</div> },
           {
+            path: "agents",
+            children: [
+              { path: "", element: <AgentsPage />, index: true },
+              { path: ":agentId", element: <AgentDetailPage /> },
+            ],
+          },
+          {
             path: "settings",
             element: <SettingsPage />,
             children: [
@@ -82,7 +91,6 @@ const router = createBrowserRouter([
               { path: "integrations", element: <IntegrationsPage /> },
             ],
           },
-          { path: "agents", element: <div>Agents</div> },
         ],
       },
 
@@ -100,10 +108,7 @@ export const App = () => {
     root.classList.remove("light", "dark");
 
     if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 
       root.classList.add(systemTheme);
       return;
