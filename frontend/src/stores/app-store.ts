@@ -26,13 +26,9 @@ export const useAppStore = create<AppStore>()(
 );
 
 export const useTheme = (): readonly [Theme, (theme: Theme) => void] => {
-  return useAppStore(
-    useShallow((state) => [state.theme, state.setTheme] as const),
-  );
+  return useAppStore(useShallow((state) => [state.theme, state.setTheme] as const));
 };
 
 export const useSidebarState = (): readonly [boolean, (isOpen: boolean) => void] => {
-  return useAppStore(
-    useShallow((state) => [state.isSidebarOpen, state.setIsSidebarOpen] as const),
-  );
+  return useAppStore(useShallow((state) => [state.isSidebarOpen, state.setIsSidebarOpen] as const));
 };

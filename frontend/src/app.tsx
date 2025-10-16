@@ -7,6 +7,7 @@ import { BrandedLayout } from "~/layouts/branded-layout";
 import { queryClient } from "~/lib/query-client";
 import { AgentDetailPage } from "~/modules/agent/routes/agent-detail.route";
 import { AgentsPage } from "~/modules/agent/routes/agents.route";
+import { PromptPreviewPage } from "~/modules/agent/routes/prompt-preview.route";
 import { CheckEmailPage } from "~/modules/auth/routes/check-email.route";
 import { ForgotPasswordPage } from "~/modules/auth/routes/forgot-password.route";
 import { LoginPage } from "~/modules/auth/routes/login.route";
@@ -72,9 +73,13 @@ const router = createBrowserRouter([
           { path: "", element: <div>Home</div> },
           {
             path: "agents",
+            element: <AgentsPage />,
             children: [
-              { path: "", element: <AgentsPage />, index: true },
-              { path: ":agentId", element: <AgentDetailPage /> },
+              {
+                path: ":agentId",
+                element: <AgentDetailPage />,
+                children: [{ path: "preview/:promptId", element: <PromptPreviewPage /> }],
+              },
             ],
           },
           {
