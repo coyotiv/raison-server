@@ -1,10 +1,11 @@
-import mongoose, { type ClientSession } from 'mongoose'
+import mongoose, { type ClientSession, Types } from 'mongoose'
 
 import Prompt from '@/domains/prompts/model'
 import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
-import Agent, { type PopulatedAgent } from './model'
+import Agent, { type PopulatedAgent, softDeleteAgentById } from './model'
 import type { AgentCreateInput, AgentUpdateInput, AgentPromptCreateInput } from './validators'
 import type { AgentPayload } from '@/types'
+import { softDeletePromptById } from '@/domains/prompts/model'
 
 type AgentWithSystemPrompt = PopulatedAgent & { systemPrompt?: string | null }
 
@@ -108,7 +109,9 @@ export async function updateAgent(id: string, data: AgentUpdateInput): Promise<A
     agent.name = data.name
 
     if (data.prompts) {
-      await Prompt.updateMany({ agent: agent._id, deletedAt: null }, { $set: { deletedAt: new Date() } }).session(session)
+      await Prompt.updateMany({ agent: agent._id, deletedAt: null }, { $set: { deletedAt: new Date() } }).session(
+        session
+      )
 
       const createdPrompts = await Prompt.create(
         data.prompts.map(prompt => ({
@@ -135,7 +138,10 @@ export async function updateAgent(id: string, data: AgentUpdateInput): Promise<A
   return populatedAgent ? normalizeSystemPrompt(populatedAgent) : null
 }
 
-export async function appendAgentPrompt(id: string, data: AgentPromptCreateInput): Promise<AgentWithSystemPrompt | null> {
+export async function appendAgentPrompt(
+  id: string,
+  data: AgentPromptCreateInput
+): Promise<AgentWithSystemPrompt | null> {
   const agent = await Agent.findById(id).lean()
 
   if (!agent || agent.deletedAt) {
@@ -172,9 +178,13 @@ export async function deleteAgent(id: string): Promise<boolean> {
 
   const deletedAt = new Date()
 
-  await Prompt.updateMany({ agent: agent._id, deletedAt: null }, { $set: { deletedAt } }).lean()
-  agent.deletedAt = deletedAt
-  await agent.save({ validateBeforeSave: false })
+  const promptIds = await Prompt.find({ agent: agent._id, deletedAt: null })
+    .select('_id')
+    .lean<Array<{ _id: Types.ObjectId }>>()
 
-  return true
+  await Promise.all(promptIds.map(prompt => softDeletePromptById(prompt._id, { deletedAt })))
+
+  const deletedAgent = await softDeleteAgentById(agent._id, { deletedAt })
+
+  return deletedAgent !== null
 }
