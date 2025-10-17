@@ -1,0 +1,29 @@
+{
+  "name": "oop",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "private": true,
+  "scripts": {
+    "start": "ts-node index.ts",
+    "debug": "node --inspect-brk -r ts-node/register index.ts",
+    "repl": "ts-node repl.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "format": "biome format . --write",
+    "lint": "biome check . --write",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.6",
+    "@tsconfig/strictest": "^2.0.6",
+    "@types/node": "^24.8.0",
+    "@vitest/ui": "^3.2.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
