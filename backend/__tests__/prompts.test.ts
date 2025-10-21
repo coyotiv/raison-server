@@ -129,6 +129,24 @@ describe('Prompts API', () => {
       expect(status).toBe(400)
       expect(body).toHaveProperty('message')
     })
+
+    it('increments version and records revision when prompt is updated', async () => {
+      const agent = await createAgent()
+      const created = await createPrompt({ agentId: agent.body._id, systemPrompt: 'Initial version' })
+      const id = created.body._id
+      const initialVersion = created.body.version
+
+      const updated = await api.put(`/prompts/${id}`).send({ systemPrompt: 'Updated version' })
+      expect(updated.status).toBe(200)
+      expect(updated.body).toHaveProperty('version', initialVersion + 1)
+
+      const history = await api.get(`/prompts/${id}/history`)
+      expect(history.status).toBe(200)
+      expect(Array.isArray(history.body)).toBe(true)
+      const versions = (history.body as Array<{ version: number }>).map(entry => entry.version)
+      expect(versions).toContain(initialVersion)
+      expect(versions).toContain(initialVersion + 1)
+    })
   })
 
   describe('DELETE /prompts/:id', () => {
@@ -149,6 +167,53 @@ describe('Prompts API', () => {
       const { status, body } = await api.delete(`/prompts/${nonExistingId}`)
       expect(status).toBe(404)
       expect(body).toHaveProperty('message')
+    })
+
+    it('updates agent systemPrompt when deleting the latest prompt', async () => {
+      const agent = await createAgent({ name: 'Agent Delete Sync' })
+      const agentId = agent.body._id
+
+      const prompt1 = await createPrompt({ agentId, systemPrompt: 'Primary' })
+      const prompt2 = await createPrompt({ agentId, systemPrompt: 'Secondary' })
+
+      expect(prompt1.status).toBe(201)
+      expect(prompt2.status).toBe(201)
+
+      const agentBeforeDelete = await api.get(`/agents/${agentId}`)
+      expect(agentBeforeDelete.status).toBe(200)
+      expect(agentBeforeDelete.body.systemPrompt).toBe('Secondary')
+
+      const delRes = await api.delete(`/prompts/${prompt2.body._id}`)
+      expect(delRes.status).toBe(204)
+
+      const agentAfterDelete = await api.get(`/agents/${agentId}`)
+      expect(agentAfterDelete.status).toBe(200)
+      expect(agentAfterDelete.body.systemPrompt).toBe('Primary')
+    })
+  })
+
+  describe('POST /prompts/:id/restore/:version', () => {
+    it('restoring a version updates agent systemPrompt to restored text', async () => {
+      const agent = await createAgent({ name: 'Agent Restore Sync' })
+      const agentId = agent.body._id
+
+      const prompt = await createPrompt({ agentId, systemPrompt: 'Initial' })
+      const promptId = prompt.body._id
+
+      await api.put(`/prompts/${promptId}`).send({ systemPrompt: 'Updated once' })
+      const secondUpdate = await api.put(`/prompts/${promptId}`).send({ systemPrompt: 'Updated twice' })
+      expect(secondUpdate.status).toBe(200)
+
+      const agentAfterUpdates = await api.get(`/agents/${agentId}`)
+      expect(agentAfterUpdates.status).toBe(200)
+      expect(agentAfterUpdates.body.systemPrompt).toBe('Updated twice')
+
+      const restoreRes = await api.post(`/prompts/${promptId}/restore/1`)
+      expect(restoreRes.status).toBe(200)
+
+      const agentAfterRestore = await api.get(`/agents/${agentId}`)
+      expect(agentAfterRestore.status).toBe(200)
+      expect(agentAfterRestore.body.systemPrompt).toBe('Initial')
     })
   })
 })

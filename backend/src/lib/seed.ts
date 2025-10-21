@@ -8,7 +8,6 @@ import { DEFAULT_PROMPT_TAG, normalizeTags } from '@/lib/tags'
 
 type SeedPrompt = {
   systemPrompt: string
-  version?: string | number
   tags?: string[]
 }
 
@@ -35,21 +34,6 @@ function uniqueTags(tags: string[]): string[] {
   return Array.from(new Set(tags))
 }
 
-function resolveVersion(version: SeedPrompt['version'], fallback: number): number {
-  if (typeof version === 'number' && Number.isFinite(version)) {
-    return version
-  }
-
-  if (typeof version === 'string') {
-    const parsed = Number(version)
-    if (Number.isFinite(parsed)) {
-      return parsed
-    }
-  }
-
-  return fallback
-}
-
 function resolveTags(prompt: SeedPrompt, index: number): string[] {
   const allowEmpty = index > 0
   const normalized = prompt.tags ? normalizeTags(prompt.tags, { allowEmpty }) : allowEmpty ? [] : [DEFAULT_PROMPT_TAG]
@@ -70,7 +54,6 @@ function serializePrompt(prompt: SeedPrompt, agentId: AgentDocument['_id'], inde
     agent: agentId,
     systemPrompt: prompt.systemPrompt,
     tags: resolveTags(prompt, index),
-    version: resolveVersion(prompt.version, index),
     deletedAt: null,
   }
 }
